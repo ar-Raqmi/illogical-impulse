@@ -40,7 +40,7 @@ FocusScope {
                     buttonIcon: "image_search"
                     onClicked: { 
                         GlobalStates.sidebarLeftOpen = false; 
-                        Quickshell.execDetached(["qs", "-p", Quickshell.shellPath(""), "ipc", "call", "region", "search"]); 
+                        Quickshell.execDetached(["bash", "-c", "sleep 0.5; qs -p '" + Quickshell.shellPath("") + "' ipc call region search"]); 
                     }
                     StyledToolTip { text: Translation.tr("Google Lens") }
                 }
