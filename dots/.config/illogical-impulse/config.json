@@ -162,7 +162,7 @@
         "tooltips": {
             "clickToShow": false
         },
-        "topLeftIcon": "spark",
+        "topLeftIcon": "miuLogo",
         "utilButtons": {
             "showColorPicker": true,
             "showDarkModeToggle": false,

@@ -231,7 +231,11 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: 25
                     height: 25
-                    source: "miuLogo.svg" //SystemInfo.distroIcon
+                    source: {
+                        if (Config.options.bar.topLeftIcon === 'distro') return SystemInfo.distroIcon;
+                        if (Config.options.bar.topLeftIcon === 'miuLogo' || !Config.options.bar.topLeftIcon) return "miuLogo.svg";
+                        return `${Config.options.bar.topLeftIcon}-symbolic`;
+                    }
                     colorize: true
                     color: Appearance.colors.colOnLayer0
                 }
