@@ -32,8 +32,15 @@ Singleton {
     property bool wallpaperSelectorOpen: false
     property bool workspaceShowNumbers: false
 
+    onSidebarLeftOpenChanged: {
+        if (GlobalStates.sidebarLeftOpen) {
+            GlobalStates.sidebarRightOpen = false;
+        }
+    }
+
     onSidebarRightOpenChanged: {
         if (GlobalStates.sidebarRightOpen) {
+            GlobalStates.sidebarLeftOpen = false;
             Notifications.timeoutAll();
             Notifications.markAllRead();
         }
