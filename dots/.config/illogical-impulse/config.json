@@ -359,10 +359,10 @@
         "updateInterval": 3000
     },
     "screenRecord": {
-        "savePath": "$HOME/Videos"
+        "savePath": "Videos/Captures"
     },
     "screenSnip": {
-        "savePath": "$HOME/Pictures/Screenshots/"
+        "savePath": "Pictures/Screenshots/"
     },
     "search": {
         "engineBaseUrl": "https://www.google.com/search?q=",
@@ -517,7 +517,7 @@
         }
     },
     "wallpaperSelector": {
-        "useSystemFileDialog": false
+        "useSystemFileDialog": true
     },
     "windows": {
         "centerTitle": true,
