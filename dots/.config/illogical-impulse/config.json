@@ -80,7 +80,7 @@
             "workspaceZoom": 1.07
         },
         "thumbnailPath": "",
-        "wallpaperPath": "/home/rezephyr/Pictures/Wallpapers/miuOS-Wallpaper-01.jpg",
+        "wallpaperPath": "",
         "widgets": {
             "clock": {
                 "cookie": {
@@ -108,7 +108,7 @@
                         "width": 25
                     },
                     "showDate": true,
-                    "vertical": false
+                    "vertical": true
                 },
                 "enable": true,
                 "placementStrategy": "free",
@@ -119,8 +119,8 @@
                 "showOnlyWhenLocked": false,
                 "style": "digital",
                 "styleLocked": "digital",
-                "x": 2550.36328125,
-                "y": 674.6421875000001
+                "x": 1339.7578125000002,
+                "y": 619.3984375
             },
             "weather": {
                 "enable": false,
@@ -330,7 +330,7 @@
     },
     "panelFamily": "ii",
     "policies": {
-        "ai": 0,
+        "ai": 1,
         "weeb": 0
     },
     "regionSelector": {
@@ -365,7 +365,7 @@
         "savePath": "Pictures/Screenshots/"
     },
     "search": {
-        "engineBaseUrl": "https://www.google.com/search?q=",
+        "engineBaseUrl": "https://www.duckduckgo.com/search?q=",
         "excludedSites": [
             "quora.com",
             "facebook.com"
@@ -413,7 +413,7 @@
         "keepRightSidebarLoaded": true,
         "quickSliders": {
             "enable": true,
-            "showBrightness": false,
+            "showBrightness": true,
             "showMic": true,
             "showVolume": true
         },

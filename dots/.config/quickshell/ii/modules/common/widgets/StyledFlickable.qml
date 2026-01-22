@@ -19,6 +19,8 @@ Flickable {
         visible: Config?.options.interactions.scrolling.fasterTouchpadScroll
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
+        hoverEnabled: false
+        propagateComposedEvents: true
         onWheel: function(wheelEvent) {
             const delta = wheelEvent.angleDelta.y / root.mouseScrollDeltaThreshold;
             // The angleDelta.y of a touchpad is usually small and continuous,

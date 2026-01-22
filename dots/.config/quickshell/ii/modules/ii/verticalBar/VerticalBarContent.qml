@@ -142,6 +142,15 @@ Item { // Bar content region
                 Layout.alignment: Qt.AlignHCenter
                 Layout.fillWidth: true
             }
+
+            HorizontalBarSeparator {
+                visible: Battery.available
+            }
+
+            BatteryIndicator {
+                visible: Battery.available
+                Layout.fillWidth: true
+            }
         }
     }
 
@@ -185,16 +194,6 @@ Item { // Bar content region
                     visible: Config.options.bar.weather.enable
                     Layout.alignment: Qt.AlignHCenter
                     VerticalWeatherWidget {
-                        Layout.fillWidth: true
-                    }
-                }
-
-                Bar.BarGroup {
-                    vertical: true
-                    padding: 4
-                    visible: Battery.available
-                    Layout.alignment: Qt.AlignHCenter
-                    BatteryIndicator {
                         Layout.fillWidth: true
                     }
                 }
