@@ -414,7 +414,7 @@
         "quickSliders": {
             "enable": true,
             "showBrightness": true,
-            "showMic": true,
+            "showMic": false,
             "showVolume": true
         },
         "quickToggles": {
@@ -422,12 +422,16 @@
                 "columns": 5,
                 "toggles": [
                     {
-                        "size": 1,
+                        "size": 2,
                         "type": "network"
                     },
                     {
-                        "size": 1,
+                        "size": 2,
                         "type": "bluetooth"
+                    },
+                    {
+                        "size": 1,
+                        "type": "powerProfile"
                     },
                     {
                         "size": 1,
@@ -436,6 +440,14 @@
                     {
                         "size": 1,
                         "type": "mic"
+                    },
+                    {
+                        "size": 1,
+                        "type": "musicRecognition"
+                    },
+                    {
+                        "size": 1,
+                        "type": "colorPicker"
                     },
                     {
                         "size": 1,
