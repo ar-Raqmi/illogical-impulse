@@ -276,7 +276,7 @@
     },
     "lock": {
         "blur": {
-            "enable": true,
+            "enable": false,
             "extraZoom": 1.1,
             "radius": 100
         },
