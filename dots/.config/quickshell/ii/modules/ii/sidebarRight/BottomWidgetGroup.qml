@@ -310,6 +310,7 @@ FocusScope {
         ScriptAction {
             script: {
                 root.previousIndex = root.selectedTab;
+                root.forceFocusToTab();
             }
         }
     }
