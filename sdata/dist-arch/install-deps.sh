@@ -17,10 +17,8 @@ remove_deprecated_dependencies(){
   local list=()
   list+=(illogical-impulse-{microtex,pymyc-aur})
   list+=(hyprland-qtutils)
+  list+=({quickshell,hyprutils,hyprpicker,hyprlang,hypridle,hyprland-qt-support,hyprland-qtutils,hyprlock,xdg-desktop-portal-hyprland,hyprcursor,hyprwayland-scanner,hyprland}-git)
   list+=(matugen-bin)
-  list+=(hyprland hyprlang hyprutils hyprcursor hyprwayland-scanner)
-  list+=(quickshell-git hyprland-qt-support-git hyprland-qtutils-git)
-  list+=(glaze) # hyprland-git now bundles glaze headers, remove standalone package
   for i in ${list[@]};do try sudo pacman --noconfirm -Rdd $i;done
 }
 # NOTE: `implicitize_old_dependencies()` was for the old days when we just switch from dependencies.conf to local PKGBUILDs.
@@ -80,7 +78,7 @@ install-local-pkgbuild() {
   x pushd $location
 
   source ./PKGBUILD
-  x yay -S --sudoloop $installflags --asdeps --overwrite '*' "${depends[@]}"
+  x yay -S --sudoloop $installflags --asdeps "${depends[@]}"
   # man makepkg:
   # -A, --ignorearch: Ignore a missing or incomplete arch field in the build script.
   # -s, --syncdeps: Install missing dependencies using pacman. When build-time or run-time dependencies are not found, pacman will try to resolve them.
@@ -99,14 +97,6 @@ metapkgs+=(./sdata/dist-arch/illogical-impulse-quickshell-git)
 # metapkgs+=(./sdata/dist-arch/packages/illogical-impulse-oneui4-icons-git)
 [[ -f /usr/share/icons/Bibata-Modern-Classic/index.theme ]] || \
   metapkgs+=(./sdata/dist-arch/illogical-impulse-bibata-modern-classic-bin)
-
-# Remove glaze package if it exists to prevent file conflicts with hyprland-git
-# hyprland-git now bundles glaze headers internally
-if pacman -Qq glaze &>/dev/null; then
-  printf "${STY_CYAN}[$0]: Removing glaze package (conflicts with hyprland-git bundled headers)${STY_RST}\n"
-  sudo pacman --noconfirm -Rdd glaze
-fi
-
 
 for i in "${metapkgs[@]}"; do
   metainstallflags="--needed"
