@@ -20,6 +20,7 @@ remove_deprecated_dependencies(){
   list+=(matugen-bin)
   list+=(hyprland hyprlang hyprutils hyprcursor hyprwayland-scanner)
   list+=(quickshell-git hyprland-qt-support-git hyprland-qtutils-git)
+  list+=(glaze) # hyprland-git now bundles glaze headers, remove standalone package
   for i in ${list[@]};do try sudo pacman --noconfirm -Rdd $i;done
 }
 # NOTE: `implicitize_old_dependencies()` was for the old days when we just switch from dependencies.conf to local PKGBUILDs.
