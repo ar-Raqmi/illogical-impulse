@@ -84,7 +84,6 @@ packages = [
 [groups.hyprland]
 packages = [
   "hyprland",
-  "hyprland-devel",
   "hyprland-guiutils",
   "hyprsunset",
   "wl-clipboard"
