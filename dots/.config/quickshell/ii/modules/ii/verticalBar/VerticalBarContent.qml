@@ -213,13 +213,12 @@ Item { // Bar content region
 
                 Revealer {
                     vertical: true
-                    reveal: Notifications.silent
+                    reveal: Notifications.silent || Notifications.unread > 0
                     Layout.fillWidth: true
-                    MaterialSymbol {
+                    Bar.NotificationUnreadCount {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: "do_not_disturb_on"
+                        iconColor: Appearance.colors.colOnLayer1
                         iconSize: Appearance.font.pixelSize.large
-                        color: Appearance.colors.colOnLayer1
                     }
                 }
             }

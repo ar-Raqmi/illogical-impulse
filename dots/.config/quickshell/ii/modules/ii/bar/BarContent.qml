@@ -294,6 +294,7 @@ Item { // Bar content region
                         }
                         NotificationUnreadCount {
                             id: notificationUnreadCount
+                            iconColor: rightSidebarButton.colText
                         }
                     }
                     MaterialSymbol {
