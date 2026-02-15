@@ -21,7 +21,7 @@ Scope {
         readonly property HyprlandMonitor monitor: Hyprland.monitorFor(panelWindow.screen)
         property bool monitorIsFocused: (Hyprland.focusedMonitor?.id == monitor?.id)
         visible: GlobalStates.searchOpen
-        WlrLayershell.keyboardFocus: GlobalStates.searchOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: GlobalStates.searchOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
         WlrLayershell.namespace: "quickshell:search"
         WlrLayershell.layer: WlrLayer.Top
@@ -36,6 +36,12 @@ Scope {
             bottom: true
             left: true
             right: true
+        }
+
+        onVisibleChanged: {
+            if (visible) {
+                searchWidget.focusSearchInput();
+            }
         }
 
         Connections {
@@ -70,6 +76,7 @@ Scope {
 
         Column {
             id: columnLayout
+            focus: true
             visible: GlobalStates.searchOpen
             anchors.centerIn: parent
             spacing: -8
