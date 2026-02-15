@@ -100,6 +100,7 @@ Scope { // Scope
                     LauncherSearch.query = "";
                 }
             }
+            Component.onDestruction: GlobalFocusGrab.removeDismissable(panelWindow)
             Connections {
                 target: GlobalFocusGrab
                 function onDismissed() {
@@ -148,9 +149,9 @@ Scope { // Scope
                         if (event.key === Qt.Key_O) {
                             panelWindow.extend = !panelWindow.extend;
                         } else if (event.key === Qt.Key_D) {
-                            root.toggleDetach();
+                            Qt.callLater(root.toggleDetach);
                         } else if (event.key === Qt.Key_P) {
-                            root.togglePin();
+                            Qt.callLater(root.togglePin);
                         }
                         event.accepted = true;
                     }
@@ -191,7 +192,7 @@ Scope { // Scope
                 Keys.onPressed: (event) => {
                     if (event.modifiers === Qt.ControlModifier) {
                         if (event.key === Qt.Key_D) {
-                            root.toggleDetach();
+                            Qt.callLater(root.toggleDetach);
                         }
                         event.accepted = true;
                     }
