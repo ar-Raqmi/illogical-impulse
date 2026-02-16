@@ -17,6 +17,14 @@ FocusScope {
     property string operation: ""
     property bool newNumber: true
 
+    function formatNumber(value) {
+        if (value === "Error" || value === "NaN") return value;
+        
+        let parts = value.toString().split(".");
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        return parts.join(".");
+    }
+
     function handleDigit(digit) {
         if (newNumber) {
             displayValue = digit;
@@ -25,6 +33,8 @@ FocusScope {
             if (displayValue === "0" && digit !== ".") {
                 displayValue = digit;
             } else {
+                // Prevent multiple decimals
+                if (digit === "." && displayValue.includes(".")) return;
                 displayValue += digit;
             }
         }
@@ -48,9 +58,17 @@ FocusScope {
             case "+": result = prev + current; break;
             case "-": result = prev - current; break;
             case "*": result = prev * current; break;
-            case "/": result = prev / current; break;
+            case "/": 
+                if (current === 0) {
+                    displayValue = "Error";
+                    operation = "";
+                    newNumber = true;
+                    return;
+                }
+                result = prev / current; 
+                break;
         }
-        displayValue = result.toString();
+        displayValue = Number(result.toFixed(10)).toString();
         operation = "";
         newNumber = true;
     }
@@ -117,14 +135,14 @@ FocusScope {
                 spacing: 0
                 StyledText {
                     Layout.alignment: Qt.AlignRight
-                    text: root.operation ? root.previousValue + " " + root.operation : " "
+                    text: root.operation ? root.formatNumber(root.previousValue) + " " + root.operation : " "
                     font.pixelSize: Appearance.font.pixelSize.smallest
                     color: Appearance.colors.colSubtext
                 }
                 StyledText {
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignRight
-                    text: root.displayValue
+                    text: root.formatNumber(root.displayValue)
                     font.pixelSize: 20
                     font.weight: 600
                     font.family: Appearance.font.family.numbers
@@ -142,50 +160,63 @@ FocusScope {
             rowSpacing: 6
             columnSpacing: 6
 
-            CompactCalcButton { text: "C"; colBackground: Appearance.colors.colErrorContainer; colText: Appearance.colors.colOnErrorContainer; onClicked: root.clear() }
-            CompactCalcButton { icon: "backspace"; onClicked: root.backspace() }
-            CompactCalcButton { text: "%"; onClicked: { root.displayValue = (parseFloat(root.displayValue) / 100).toString(); root.newNumber = true; } }
-            CompactCalcButton { text: "÷"; op: true; onClicked: root.handleOperation("/") }
+            CompactCalcButton { buttonText: "C"; baseColor: Appearance.colors.colErrorContainer; colText: Appearance.colors.colOnErrorContainer; onClicked: root.clear() }
+            CompactCalcButton { materialIcon: "backspace"; onClicked: root.backspace() }
+            CompactCalcButton { buttonText: "%"; onClicked: { root.displayValue = (parseFloat(root.displayValue) / 100).toString(); root.newNumber = true; } }
+            CompactCalcButton { buttonText: "÷"; op: true; onClicked: root.handleOperation("/") }
 
-            CompactCalcButton { text: "7"; onClicked: root.handleDigit("7") }
-            CompactCalcButton { text: "8"; onClicked: root.handleDigit("8") }
-            CompactCalcButton { text: "9"; onClicked: root.handleDigit("9") }
-            CompactCalcButton { icon: "close"; op: true; onClicked: root.handleOperation("*") }
+            CompactCalcButton { buttonText: "7"; onClicked: root.handleDigit("7") }
+            CompactCalcButton { buttonText: "8"; onClicked: root.handleDigit("8") }
+            CompactCalcButton { buttonText: "9"; onClicked: root.handleDigit("9") }
+            CompactCalcButton { materialIcon: "close"; op: true; onClicked: root.handleOperation("*") }
 
-            CompactCalcButton { text: "4"; onClicked: root.handleDigit("4") }
-            CompactCalcButton { text: "5"; onClicked: root.handleDigit("5") }
-            CompactCalcButton { text: "6"; onClicked: root.handleDigit("6") }
-            CompactCalcButton { icon: "remove"; op: true; onClicked: root.handleOperation("-") }
+            CompactCalcButton { buttonText: "4"; onClicked: root.handleDigit("4") }
+            CompactCalcButton { buttonText: "5"; onClicked: root.handleDigit("5") }
+            CompactCalcButton { buttonText: "6"; onClicked: root.handleDigit("6") }
+            CompactCalcButton { materialIcon: "remove"; op: true; onClicked: root.handleOperation("-") }
 
-            CompactCalcButton { text: "1"; onClicked: root.handleDigit("1") }
-            CompactCalcButton { text: "2"; onClicked: root.handleDigit("2") }
-            CompactCalcButton { text: "3"; onClicked: root.handleDigit("3") }
-            CompactCalcButton { icon: "add"; op: true; onClicked: root.handleOperation("+") }
+            CompactCalcButton { buttonText: "1"; onClicked: root.handleDigit("1") }
+            CompactCalcButton { buttonText: "2"; onClicked: root.handleDigit("2") }
+            CompactCalcButton { buttonText: "3"; onClicked: root.handleDigit("3") }
+            CompactCalcButton { materialIcon: "add"; op: true; onClicked: root.handleOperation("+") }
 
-            CompactCalcButton { text: "0"; Layout.columnSpan: 2; Layout.fillWidth: true; onClicked: root.handleDigit("0") }
-            CompactCalcButton { text: "."; onClicked: root.handleDigit(".") }
-            CompactCalcButton { icon: "equal"; colBackground: Appearance.colors.colPrimary; colText: Appearance.colors.colOnPrimary; onClicked: root.calculate() }
+            CompactCalcButton { buttonText: "0"; Layout.columnSpan: 2; Layout.fillWidth: true; onClicked: root.handleDigit("0") }
+            CompactCalcButton { buttonText: "."; onClicked: root.handleDigit(".") }
+            CompactCalcButton { materialIcon: "equal"; baseColor: Appearance.colors.colPrimary; colText: Appearance.colors.colOnPrimary; onClicked: root.calculate() }
         }
     }
 
-    component CompactCalcButton: Rectangle {
+    component CompactCalcButton: RippleButton {
         property bool op: false
-        property string icon: ""
-        property string text: ""
+        property string materialIcon: ""
         property color colText: op ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurface
-        property color colBackground: op ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer2
-        signal clicked()
-        id: btnRoot
+        property color baseColor: op ? Appearance.colors.colPrimaryContainer : Appearance.colors.colLayer2
+        
+        colBackgroundHover: ColorUtils.mix(baseColor, colText, 0.9)
         Layout.fillWidth: true
         Layout.fillHeight: true
-        radius: Appearance.rounding.small
-        color: mouseArea.containsPress ? ColorUtils.mix(colBackground, colText, 0.8) : (mouseArea.containsMouse ? ColorUtils.mix(colBackground, colText, 0.92) : colBackground)
-        Behavior on color { ColorAnimation { duration: 150 } }
-        Item {
+        buttonRadius: Appearance.rounding.small
+        colBackground: baseColor
+        colRipple: ColorUtils.mix(baseColor, colText, 0.8)
+        
+        contentItem: Item {
             anchors.centerIn: parent
-            MaterialSymbol { anchors.centerIn: parent; visible: btnRoot.icon !== ""; text: btnRoot.icon; iconSize: 18; color: btnRoot.colText }
-            StyledText { anchors.centerIn: parent; visible: btnRoot.icon === ""; text: btnRoot.text; font.pixelSize: 16; font.weight: 500; font.family: Appearance.font.family.numbers; color: btnRoot.colText }
+            MaterialSymbol { 
+                anchors.centerIn: parent
+                visible: materialIcon !== ""
+                text: materialIcon
+                iconSize: 18
+                color: colText
+            }
+            StyledText { 
+                anchors.centerIn: parent
+                visible: materialIcon === ""
+                text: buttonText
+                font.pixelSize: 16
+                font.weight: 500
+                font.family: Appearance.font.family.numbers
+                color: colText
+            }
         }
-        MouseArea { id: mouseArea; anchors.fill: parent; hoverEnabled: true; onClicked: btnRoot.clicked() }
     }
 }
