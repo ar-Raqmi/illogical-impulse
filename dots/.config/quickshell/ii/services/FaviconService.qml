@@ -96,7 +96,7 @@ Singleton {
         let cleanTitle = title.replace(/\s*[-|—|·]\s*(Mozilla Firefox|Brave|Google Chrome|Chromium|Vivaldi|Edge|Zen|Floorp|LibreWolf|Thorium|Waterfox|Mullvad|Tor Browser|Quickshell|Antigravity)\s*$/i, "").trim();
         const lower = cleanTitle.toLowerCase();
         
-        if (lower === "new tab" || lower === "new private tab" || lower === "private browsing" || lower === "about:blank" || lower === "zen") {
+        if (lower === "new tab" || lower === "new private tab" || lower === "private browsing" || lower === "about:blank" || lower === "zen" || lower === "history") {
             return "";
         }
 
@@ -119,7 +119,7 @@ Singleton {
             "online", "offline", "download", "upload", "share", "save", "export", "import",
             "everyone", "official", "best", "top", "latest", "popular", "trending", "featured",
             "all", "the", "for", "and", "with", "your", "our", "this", "that", "from",
-            "error", "loading", "redirect", "submit", "history", "confirm", "verify", "update", "install"
+            "error", "loading", "redirect", "submit", "confirm", "verify", "update", "install"
         ];
 
         const parts = cleanTitle.split(/[\s:|·|—|\||\[|\]|\(|\)|\-]/).filter(p => p.trim().length >= 2);
