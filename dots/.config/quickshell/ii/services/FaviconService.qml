@@ -113,16 +113,17 @@ Singleton {
     function resolveDomain(title) {
         if (!title) return "";
         
-        // DLC pack xD, basically check cache from previous searches
-        if (foundTitles[title]) {
-            return foundTitles[title];
-        }
-        
         let cleanTitle = title.replace(/\s*[-|—|·]\s*(Mozilla Firefox|Brave|Google Chrome|Chromium|Vivaldi|Edge|Zen|Floorp|LibreWolf|Thorium|Waterfox|Mullvad|Tor Browser|Quickshell|Antigravity)\s*$/i, "").trim();
         const lower = cleanTitle.toLowerCase();
         
         if (lower === "new tab" || lower === "new private tab" || lower === "private browsing" || lower === "about:blank" || lower === "zen" || lower === "history") {
             return "";
+        }
+
+        // TIER 0: PATTERN DETECTION (had to called it TIER 0, too lazy to rename all the numbering scheme)
+        // GitHub titles use "user/repo" format — no other site does this
+        if (/^[\w][\w.-]*\/[\w][\w.-]+([\s:]|$)/.test(cleanTitle)) {
+            return "github.com";
         }
 
         // TIER 1: MULTI-MATCH SCORING SYSTEM
@@ -135,7 +136,7 @@ Singleton {
         // Blacklist words
         const genericWords = [
             "web", "player", "app", "site", "page", "tab", "window", "browser", "view", "panel",
-            "home", "index", "dashboard", "portal", "hub", "center", "console", "manager",
+            "home", "index", "dashboard", "portal", "hub", "center", "console", "manager", "general",
             "login", "sign", "register", "signup", "signin", "logout", "account", "profile",
             "welcome", "about", "contact", "help", "support", "faq", "wiki", "docs", "documentation",
             "search", "settings", "preferences", "options", "config", "configuration", "admin",
@@ -150,18 +151,25 @@ Singleton {
         const parts = cleanTitle.split(/[\s:|·|—|\||\[|\]|\(|\)|\-]/).filter(p => p.trim().length >= 2);
         let bestDomain = "";
         let maxScore = -1;
+        let hasUniqueKeyword = false;
 
         if (parts.length > 0) {
             for (let i = 0; i < parts.length; i++) {
                 const kw = parts[i].trim().toLowerCase();
                 if (genericWords.includes(kw)) continue;
+                hasUniqueKeyword = true;
 
                 // Priority: Static Knowledge Base > History Map
                 // This ensures "youtube" -> youtube.com even if history says google.com
+                const isStatic = !!root.staticTitleMap[kw];
                 const dom = root.staticTitleMap[kw] || root.titleMap[kw];
 
                 if (dom) {
                     let score = 100; // Base score for history match
+
+                    // Known Brand Bonus: staticTitleMap entries always beat history guesses
+                    // e.g. "github" (static) beats "microsoft" (history) on GitHub pages
+                    if (isStatic) score += 300;
 
                     // Specificity Bonus: More dots = more specific (e.g. drive.google.com vs google.com)
                     score += (dom.split('.').length - 1) * 50;
@@ -193,7 +201,8 @@ Singleton {
         }
 
         // Search cache AFTER scoring — so scoring always wins over stale search results
-        if (foundTitles[title]) return foundTitles[title];
+        // Only use if title had unique keywords (prevents "General" and such)
+        if (hasUniqueKeyword && foundTitles[title]) return foundTitles[title];
 
         // TIER 2: Explicit Domains in Title (e.g. hypr.land)
         const domainMatch = cleanTitle.match(/([a-z0-9-]+)\.([a-z]{2,3}(\.[a-z]{2})?|land|nz|ai|io|ly|so|me|dev|app|info|xyz|icu|top|site|online)/i);
@@ -222,8 +231,8 @@ Singleton {
         */
         
         // TIER 4: Search Engine Fallback (DuckDuckGo Lite)
-        // Only trigger if we haven't failed before and aren't currently searching
-        if (!failedTitles[title] && !searching[title]) {
+        // Only trigger if title has unique keywords and we haven't failed before
+        if (hasUniqueKeyword && !failedTitles[title] && !searching[title]) {
              searchFallback(title);
         }
         
@@ -260,7 +269,6 @@ Singleton {
         // 1. vemetric API (fast, high-res, works for popular sites)
         // 2. Direct /favicon.ico from the website (accurate for personal/uncommon sites)
         // 3. Google S2 API (reliable last resort)
-        // For this we'll be using vemetric.com API to find favicons
         const download = downloadProcess.createObject(null, {
             command: ["bash", "-c", `mkdir -p "${rawCacheDir}" && ( [ -f "${path}" ] || curl -f -L -s --max-time 10 "https://favicon.vemetric.com/${domain}?size=128" -o "${path}" || curl -f -L -s --max-time 10 "https://${domain}/favicon.ico" -o "${path}" || curl -f -L -s --max-time 10 "https://www.google.com/s2/favicons?domain=${domain}&sz=128" -o "${path}" )`]
         });
