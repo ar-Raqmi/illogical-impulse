@@ -20,13 +20,13 @@ Singleton {
         startupScan();
         triggerBridge();
         
-        // Auto-refresh bridge every 30 seconds to pick up new history
+        // Auto-refresh bridge every 5 seconds to pick up new history
         bridgeRefreshTimer.running = true;
     }
     
     Timer {
         id: bridgeRefreshTimer
-        interval: 30000
+        interval: 5000
         repeat: true
         onTriggered: {
             // console.log(`[FaviconService] Auto-refreshing bridge...`);
@@ -202,7 +202,7 @@ Singleton {
 
         // Search cache AFTER scoring — so scoring always wins over stale search results
         // Only use if title had unique keywords (prevents "General" and such)
-        if (hasUniqueKeyword && foundTitles[title]) return foundTitles[title];
+        if (hasUniqueKeyword && root.foundTitles[title]) return root.foundTitles[title];
 
         // TIER 2: Explicit Domains in Title (e.g. hypr.land)
         const domainMatch = cleanTitle.match(/([a-z0-9-]+)\.([a-z]{2,3}(\.[a-z]{2})?|land|nz|ai|io|ly|so|me|dev|app|info|xyz|icu|top|site|online)/i);
@@ -232,7 +232,7 @@ Singleton {
         
         // TIER 4: Search Engine Fallback (DuckDuckGo Lite)
         // Only trigger if title has unique keywords and we haven't failed before
-        if (hasUniqueKeyword && !failedTitles[title] && !searching[title]) {
+        if (hasUniqueKeyword && !root.failedTitles[title] && !root.searching[title]) {
              searchFallback(title);
         }
         
@@ -289,7 +289,10 @@ Singleton {
         newReady[domain] = true;
         root.readyDomains = newReady;
         
-        delete downloading[domain];
+        let newDown = Object.assign({}, root.downloading);
+        delete newDown[domain];
+        root.downloading = newDown;
+        
         root.cacheCounter++;
         root.faviconDownloaded(domain);
     }
@@ -358,23 +361,27 @@ Singleton {
         const lower = title.toLowerCase();
         if (lower.length < 3 || lower.includes("new tab")) return;
         
-        searching[title] = true;
+        let newSearching = Object.assign({}, root.searching);
+        newSearching[title] = true;
+        root.searching = newSearching;
         
         const proc = searchProcess.createObject(null, {
             command: ["python3", shellDir + "/scripts/favicons/search_fallback.py", title]
         });
         
         proc.onExited.connect((code) => {
-            searching[title] = false; // clear searching flag
+            let newSearching = Object.assign({}, root.searching);
+            delete newSearching[title];
+            root.searching = newSearching; // clear searching flag
             if (code === 0) {
                 const domain = proc.stdout.text.trim();
                 if (domain && domain.length > 3) {
                     // console.log(`[FaviconService] Search Success: "${title}" -> ${domain}`);
-                    let newFound = Object.assign({}, foundTitles);
+                    let newFound = Object.assign({}, root.foundTitles);
                     newFound[title] = domain;
-                    foundTitles = newFound;
+                    root.foundTitles = newFound;
                     
-                    // Trigger download for this new domain
+                    root.cacheCounter++; // Force re-evaluation
                     downloadFavicon(domain);
                     
                     // Emit signal to force refresh of getting favicon
@@ -383,7 +390,9 @@ Singleton {
                 }
             } else {
                 // console.log(`[FaviconService] Search Failed for "${title}"`);
-                failedTitles[title] = true;
+                let newFailed = Object.assign({}, root.failedTitles);
+                newFailed[title] = true;
+                root.failedTitles = newFailed;
             }
             proc.destroy();
         });
