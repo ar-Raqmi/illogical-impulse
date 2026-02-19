@@ -10,7 +10,7 @@ Singleton {
     
     readonly property string homeDir: StandardPaths.writableLocation(StandardPaths.HomeLocation).toString().replace("file://", "").replace(/\/$/, "")
     readonly property string rawCacheDir: homeDir + "/.cache/quickshell/favicons"
-    readonly property string shellDir: Quickshell.shellDir.toString().replace("file://", "").replace(/\/$/, "")
+    readonly property string shellDir: Qt.resolvedUrl("..").toString().replace("file://", "").replace(/\/$/, "")
     readonly property string bridgePath: rawCacheDir + "/exact_title_to_url.json"
     
     Component.onCompleted: {
@@ -75,6 +75,38 @@ Singleton {
                 // console.log(`[FaviconService] Regex Fallback: "${cleanRef}" -> ${domain}`);
             } else {
                 // console.log(`[FaviconService] FAILED to resolve: "${cleanRef}"`);
+            }
+        }
+
+        // 3. Keyword Branding (Strict Branding for known services)
+        // If we have no domain, or a very generic one, check for specific keywords in the title.
+        if (!domain || domain === "google.com") {
+            const keywords = {
+                "Gmail": "mail.google.com",
+                "Inbox": "mail.google.com",
+                "Google Calendar": "calendar.google.com",
+                "Calendar": "calendar.google.com",
+                "Google Drive": "drive.google.com",
+                "Drive": "drive.google.com",
+                "Google Docs": "docs.google.com",
+                "Google Sheets": "sheets.google.com",
+                "Google Slides": "slides.google.com",
+                "Google Meet": "meet.google.com",
+                "Google Maps": "maps.google.com",
+                "Gemini": "gemini.google.com",
+                "YouTube": "youtube.com",
+                "Google AI Studio": "aistudio.google.com",
+                "NotebookLM": "notebooklm.google.com",
+                "Google Photos": "photos.google.com",
+                "Material 3": "m3.material.io"
+            };
+
+            const lowerTitle = cleanRef.toLowerCase();
+            for (const kw in keywords) {
+                if (lowerTitle.includes(kw.toLowerCase())) {
+                    domain = keywords[kw];
+                    break;
+                }
             }
         }
 
@@ -237,7 +269,7 @@ Singleton {
 
     function startupScan() {
         const cleanup = cleanupProcess.createObject(null, {
-            command: ["bash", "-c", `find "${rawCacheDir}" -name "*.png" -not -name ".tmp_*" -type f | while read f; do head -c 5 "$f" | grep -qiE "^(<svg|<\\?xml)" && rm -f "$f" && continue; fsize=$(stat -c%s "$f" 2>/dev/null || echo 0); [ "$fsize" -le 400 ] && rm -f "$f"; done`]
+            command: ["bash", "-c", `find "${rawCacheDir}" -name "*.png" -not -name ".tmp_*" -type f | while read f; do head -c 5 "$f" | grep -qiE "^(<svg|<\\?xml)" && rm -f "$f" && continue; fsize=$(stat -c%s "$f" 2>/dev/null || echo 0); [ "$fsize" -le 400 ] && rm -f "$f"; [ "$fsize" -eq 17259 ] && [ "$(basename "$f")" != "google.com.png" ] && rm -f "$f"; done`]
         });
         cleanup.onExited.connect(() => {
             const scan = scanProcess.createObject(null, {
