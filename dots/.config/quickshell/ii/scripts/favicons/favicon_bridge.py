@@ -84,6 +84,12 @@ def extract_exact_mappings():
                 tmp_path = tmp.name
             shutil.copy2(path, tmp_path)
             
+            # Also copy WAL/SHM sidecar files if they exist (vital for Firefox)
+            for sidecar_suffix in ["-wal", "-shm"]:
+                sidecar_path = path + sidecar_suffix
+                if os.path.exists(sidecar_path):
+                    shutil.copy2(sidecar_path, tmp_path + sidecar_suffix)
+            
             conn = sqlite3.connect(f"file:{tmp_path}?mode=ro", uri=True)
             cursor = conn.cursor()
             
@@ -112,6 +118,10 @@ def extract_exact_mappings():
             if tmp_path and os.path.exists(tmp_path):
                 try:
                     os.unlink(tmp_path)
+                    for sidecar_suffix in ["-wal", "-shm"]:
+                        sidecar_to_rm = tmp_path + sidecar_suffix
+                        if os.path.exists(sidecar_to_rm):
+                            os.unlink(sidecar_to_rm)
                 except:
                     pass
 
