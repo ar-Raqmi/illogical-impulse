@@ -8,15 +8,19 @@ import re
 import sys
 import traceback
 
-def log(msg):
-    """Print diagnostic info to stderr so QML can see it in terminal."""
-    print(f"[favicon_bridge] {msg}", file=sys.stderr)
+"""
+You may read this script to understand how it works
+while it is not priority to understand this script
+since this just going to blast your browser history to a json file
+and the FaviconService.qml is going to do the heavy lifting
+"""
 
 def get_browser_history_paths():
+    """Finds where your browsers hide their history files."""
     home = str(Path.home())
     paths = []
     
-    # Base directories to search
+    # Common places where browsers live
     bases = [
         os.path.join(home, ".config"),
         os.path.join(home, ".mozilla"),
@@ -28,33 +32,28 @@ def get_browser_history_paths():
         if not os.path.exists(base):
             continue
             
-        # log(f"Scanning base dir: {base}")
-        # We use a limited walk to find databases without melting the CPU
         for root, dirs, files in os.walk(base):
-            # Chromium
+            # Chromium-based (Chrome, Brave, Edge, etc.)
             if "History" in files:
                 p = os.path.join(root, "History")
-                # Ensure it's actually a browser history file by checking parent path
                 parent = root.lower()
                 if any(x in parent for x in ["chrome", "brave", "chromium", "edge", "vivaldi", "thorium", "opera", "yandex"]):
-                    # log(f"  Found Chromium history: {p}")
                     paths.append(("chromium", p))
             
-            # Firefox
+            # Firefox-based (Firefox, Zen, Librewolf, etc.)
             if "places.sqlite" in files:
                 p = os.path.join(root, "places.sqlite")
                 parent = root.lower()
                 if any(x in parent for x in ["firefox", "mozilla", "zen", "floorp", "waterfox", "librewolf"]):
-                    # log(f"  Found Firefox history: {p}")
                     paths.append(("firefox", p))
                     
-            # Optimization: don't go too deep into non-browser folders
+            # Speed boost: Don't dig too deep into random folders
             if len(root.split(os.sep)) - len(base.split(os.sep)) > 5:
                 del dirs[:]
 
     return list(set(paths))
 
-# Browser suffix pattern — must match FaviconService.qml cleanTitle()
+# We need to strip browser names from titles so they match what QML's FaviconService expects
 BROWSER_SUFFIX = re.compile(
     r"\s*[-|—|·]\s*(Mozilla Firefox|Brave|Google Chrome|Chromium|Vivaldi|Edge|"
     r"Zen|Floorp|LibreWolf|Thorium|Waterfox|Mullvad|Tor Browser|"
@@ -63,58 +62,58 @@ BROWSER_SUFFIX = re.compile(
 )
 
 def clean_title(raw_title):
+    """Turns 'YouTube - Mozilla Firefox' into just 'YouTube'."""
     if not raw_title:
         return None
     clean = BROWSER_SUFFIX.sub("", raw_title).strip()
     return clean if clean else None
 
 def extract_exact_mappings():
+    """The heavy lifting: mapping your window titles to actual URLs from your history."""
     title_to_url = {}
     history_paths = get_browser_history_paths()
     
     if not history_paths:
-        # log("WARNING: No browser history files found!")
         return title_to_url
 
     for db_type, path in history_paths:
         tmp_path = None
         try:
-            # Copy to temp file to avoid locking issues
+            # We copy the database to a temp file so we don't lock your browser if it's open
             with tempfile.NamedTemporaryFile(delete=False, suffix=".db") as tmp:
                 tmp_path = tmp.name
             shutil.copy2(path, tmp_path)
             
-            # Also copy WAL/SHM sidecar files if they exist (vital for Firefox)
+            # Firefox is picky and needs its sidecar files to read the latest data
             for sidecar_suffix in ["-wal", "-shm"]:
                 sidecar_path = path + sidecar_suffix
                 if os.path.exists(sidecar_path):
                     shutil.copy2(sidecar_path, tmp_path + sidecar_suffix)
             
+            # Open the temp database
             conn = sqlite3.connect(f"file:{tmp_path}?mode=ro", uri=True)
             cursor = conn.cursor()
             
+            # Grab the last 5000 sites you visited
             if db_type == "chromium":
                 cursor.execute("SELECT title, url FROM urls ORDER BY last_visit_time DESC LIMIT 5000")
             else:
                 cursor.execute("SELECT title, url FROM moz_places WHERE title IS NOT NULL ORDER BY last_visit_date DESC LIMIT 5000")
             
             rows = cursor.fetchall()
-            # log(f"  Read {len(rows)} rows from {path}")
             
-            count = 0
             for title, url in rows:
                 cleaned = clean_title(title)
                 if cleaned and cleaned not in title_to_url:
                     title_to_url[cleaned] = url
-                    count += 1
             
-            # log(f"  Added {count} unique title->url mappings")
             conn.close()
             
         except Exception as e:
-            # log(f"ERROR reading {path}: {e}")
+            # If something breaks, we'll see it in the terminal
             traceback.print_exc(file=sys.stderr)
         finally:
+            # Clean up our temp files so we don't leave a mess behind
             if tmp_path and os.path.exists(tmp_path):
                 try:
                     os.unlink(tmp_path)
@@ -128,31 +127,13 @@ def extract_exact_mappings():
     return title_to_url
 
 if __name__ == "__main__":
-    # log("Starting...")
+    # Let's get to work!
     mappings = extract_exact_mappings()
-    # log(f"Total mappings: {len(mappings)}")
     
-    # Print a few samples
-    # Print a few samples
-    for i, (title, url) in enumerate(list(mappings.items())[:5]):
-        # log(f"  Sample: \"{title}\" -> {url}")
-        pass
-    
+    # If you changed the cache directory in FaviconService.qml, change it here too
     cache_dir = os.path.expanduser("~/.cache/quickshell/favicons")
     os.makedirs(cache_dir, exist_ok=True)
     
     out_path = os.path.join(cache_dir, "exact_title_to_url.json")
     with open(out_path, "w") as f:
         json.dump(mappings, f, indent=2)
-    # log(f"Wrote {len(mappings)} entries to {out_path}")
-    
-    # Clean up legacy map
-    legacy_path = os.path.join(cache_dir, "title_to_domain.json")
-    if os.path.exists(legacy_path):
-        try:
-            os.remove(legacy_path)
-            # log(f"Removed legacy {legacy_path}")
-        except:
-            pass
-    
-    # log("Done.")

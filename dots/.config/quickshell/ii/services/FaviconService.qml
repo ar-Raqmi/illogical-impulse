@@ -8,27 +8,31 @@ import QtCore
 Singleton {
     id: root
     
+    // ─── Where things live ───────────────────────────
     readonly property string homeDir: StandardPaths.writableLocation(StandardPaths.HomeLocation).toString().replace("file://", "").replace(/\/$/, "")
+    // Update this if you want to cache icons somewhere else (CHANGE IN favicon_bridge.py TOO!)
     readonly property string rawCacheDir: homeDir + "/.cache/quickshell/favicons"
+    // We use Qt.resolvedUrl so we don't have to worry about where the project is moved
     readonly property string shellDir: Qt.resolvedUrl("..").toString().replace("file://", "").replace(/\/$/, "")
     readonly property string bridgePath: rawCacheDir + "/exact_title_to_url.json"
     
     Component.onCompleted: {
-        loadBridge();
-        startupScan();
-        triggerBridge();
+        loadBridge();    // Load what we already know
+        startupScan();   // See what icons we already have in cache
+        triggerBridge(); // Go grab the latest browser history
         
-        // Auto-refresh bridge every 5 seconds to pick up new history
+        // Keep the browser history fresh so new tabs get icons quickly
         bridgeRefreshTimer.running = true;
     }
     
     Timer {
         id: bridgeRefreshTimer
-        interval: 5000
+        interval: 5000 // Refresh every 5 seconds. Change this if you feel it making your memory usage go up.
         repeat: true
         onTriggered: {
             triggerBridge();
-            // Evict stale downloading flags (> 40s old) to self-heal from crashed processes
+            
+            // Self-healing: If a download gets stuck, clear it after 40 seconds
             const now = Date.now();
             let newDown = Object.assign({}, root.downloading);
             let changed = false;
@@ -36,7 +40,8 @@ Singleton {
                 if (now - newDown[d] > 40000) { delete newDown[d]; changed = true; }
             }
             if (changed) root.downloading = newDown;
-            // Clear failed domains older than 60s to allow retries
+            
+            // Give failed domains another chance after 30 seconds
             let newFailed = Object.assign({}, root.failedDomains);
             let failChanged = false;
             for (const d in newFailed) {
@@ -46,13 +51,13 @@ Singleton {
         }
     }
     
-    property var readyDomains: ({})  // Domains with downloaded favicons
-    property var urlMap: ({})        // CleanTitle -> FullURL (from bridge)
-    property var downloading: ({})   // Track domains currently being downloaded
-    property var failedDomains: ({}) // Domains that failed download (prevent infinite retries)
-    property int cacheCounter: 0
-    
-    // Domains for which we have high-quality assets in assets/google/
+    property var readyDomains: ({})  // The "I have this icon" list
+    property var urlMap: ({})        // The "This title = This URL" dictionary
+    property var downloading: ({})   // Keep track of what we're currently fetching
+    property var failedDomains: ({}) // Let's not bang our head against a wall if a site is down
+    property int cacheCounter: 0     // A little poke to tell the UI to refresh
+ 
+    // High-quality icons we shipped in assets/google/
     readonly property var officialDomains: [
         "mail.google.com", "calendar.google.com", "drive.google.com", 
         "docs.google.com", "sheets.google.com", "slides.google.com",
@@ -63,32 +68,35 @@ Singleton {
 
     signal faviconDownloaded(string domain)
 
+    /**
+     * The magic function that finds your icons!
+     * It tries a few tricks in order:
+     * 1. History: Did you visit this site? We probably mapped it.
+     * 2. Regex: Does the window title basically look like a website?
+     * 3. Branding: Is it a famous service like "Gmail"?
+     * 4. Downloader: If we know the domain but have no icon, so it will snatch it from the web.
+     */
     function getFavicon(window) {
         if (!window || !window.title) return "";
         
         const title = window.title;
         const cleanRef = cleanTitle(title);
-        // console.log(`[FaviconService] Checking: "${title}" -> Clean: "${cleanRef}" | urlMap size: ${Object.keys(root.urlMap).length}`);
         
-        // 1. History Lookup (Highest Accuracy)
+        // Tier 1: Look at the browser history we scanned earlier (Best accuracy!)
         let fullUrl = root.urlMap[cleanRef];
         let domain = "";
         
         if (fullUrl) {
-            // console.log(`[FaviconService] History HIT: "${cleanRef}" -> ${fullUrl}`);
             domain = extractDomain(fullUrl);
         } else {
-            // 2. Regex Fallback (New Tabs/Incognito)
+            // Tier 2: Try to guess the domain from the title (e.g. "github.com")
+            // WARNING/NOTE: This is where "hallucinations" happen if a title 
+            // has a word that looks like a domain but isn't.
+            // This used happen to me where I used my workplace "email site" it uses Gmail's icon.
             domain = extractDomainFromTitle(cleanRef);
-            if (domain) {
-                // console.log(`[FaviconService] Regex Fallback: "${cleanRef}" -> ${domain}`);
-            } else {
-                // console.log(`[FaviconService] FAILED to resolve: "${cleanRef}"`);
-            }
         }
 
-        // 3. Keyword Branding (Strict Branding for known services)
-        // If we have no domain, or a very generic one, check for specific keywords in the title.
+        // Tier 3: Use the high-quality icons we shipped with for famous services
         if (!domain || domain === "google.com") {
             const keywords = {
                 "Gmail": "mail.google.com",
@@ -119,37 +127,31 @@ Singleton {
             }
         }
 
+        // If we still don't have a domain here, we give up
         if (!domain) return "";
 
-        // BRAND NORMALIZATION: Map variants to official assets
+        // Clean up common aliases to use our official icons
         if (domain === "gmail.com") domain = "mail.google.com";
         if (domain === "gemini.ai") domain = "gemini.google.com";
         
-        const _trigger = root.readyDomains; 
-        const _path = "file://" + rawCacheDir + "/" + domain + ".png";
-        
-        // TIER 0: Official Assets (Highest Priority)
+        // Priority 1: Check if we have an "Official" high-quality icon
         const officialPath = "file://" + shellDir + "/assets/google/" + domain + ".png";
         if (readyDomains[domain + "_official"] || root.officialDomains.includes(domain)) {
-             // console.log(`[FaviconService] -> OFFICIAL: ${domain}`);
              return officialPath;
         }
 
+        // Priority 2: Use the downloaded icon if we have one
         if (readyDomains[domain]) {
             const ext = readyDomains[domain + "_svg"] ? ".svg" : ".png";
-            const p = "file://" + rawCacheDir + "/" + domain + ext;
-            // console.log(`[FaviconService] -> CACHED: ${domain} -> ${p}`);
-            return p;
+            return "file://" + rawCacheDir + "/" + domain + ext;
         }
         
+        // Priority 3: If we have a domain but no icon, go pull it from the web
         if (!downloading[domain] && !failedDomains[domain] && !root.officialDomains.includes(domain)) {
-            // console.log(`[FaviconService] -> DOWNLOADING: ${domain} (url: ${fullUrl || 'none'})`);
             downloadFavicon(domain, fullUrl);
-        } else {
-            // console.log(`[FaviconService] -> BLOCKED: ${domain} (downloading: ${!!downloading[domain]}, failed: ${!!failedDomains[domain]}, official: ${root.officialDomains.includes(domain)})`);
         }
 
-        // BRAND FALLBACK (e.g. drive.google.com -> google.com)
+        // Bonus: If it's a subdomain, try the main domain icon (e.g. blog.github.com -> github.com)
         const parts = domain.split(".");
         if (parts.length > 2) {
             const parent = parts.slice(-2).join(".");
@@ -163,39 +165,44 @@ Singleton {
         return "";
     }
 
+    // Strip browser names and clutter from window titles
     function cleanTitle(title) {
         if (!title) return "";
         return title.replace(/\s*[-|—|·]\s*(Mozilla Firefox|Brave|Google Chrome|Chromium|Vivaldi|Edge|Zen|Floorp|LibreWolf|Thorium|Waterfox|Mullvad|Tor Browser|Chrome|Firefox|Web Browser|Browser|Quickshell|Antigravity)\s*$/i, "").trim();
     }
 
+    // Grab "example.com" from "https://www.example.com/page"
     function extractDomain(url) {
         if (!url) return "";
         const match = url.match(/https?:\/\/(?:www\.)?([^\/]+)/i);
         return match ? match[1].toLowerCase() : "";
     }
 
+    // Look for things like "github.com" or "user/repo" in a title
     function extractDomainFromTitle(cleanTitle) {
-        // GitHub titles use "user/repo" format
+        // Special case for GitHub "user/repo" style titles
+        // In Brave, it will show "user/repo" in the title only. I don't know why
         if (/^[\w][\w.-]*\/[\w][\w.-]+([\s:]|$)/.test(cleanTitle)) {
             return "github.com";
         }
         
-        // Generic "Domain.com" in title (or "http://domain.com")
+        // Look for anything that looks like a domain name
         const domainMatch = cleanTitle.match(/(?:https?:\/\/)?(?:www\.)?([a-z0-9-]{2,})\.([a-z]{2,3}(\.[a-z]{2})?|land|nz|ai|io|ly|so|me|dev|app|info|xyz|icu|top|site|online)/i);
         if (domainMatch) {
-            // matches[1] is domain (preview), matches[2] is TLD (md)
             return (domainMatch[1] + "." + domainMatch[2]).toLowerCase();
         }
         return "";
     }
 
+    // Start the background process to download an icon
     function downloadFavicon(domain, scrapeUrl) {
         if (downloading[domain]) return;
         let newDown = Object.assign({}, root.downloading);
         newDown[domain] = Date.now();
         root.downloading = newDown;
         
-        const scriptPath = shellDir + "/scripts/favicons/download_favicon.sh";
+        // The reason the directory is like this, so it would look organized for your shell
+        const scriptPath = shellDir + "/scripts/favicons/download_favicon.sh"; // You may change as the way you want
         const targetUrl = scrapeUrl || "";
         
         const download = downloadProcess.createObject(null, {
@@ -218,6 +225,7 @@ Singleton {
         download.running = true;
     }
 
+    // Check what format we got (PNG vs SVG) and update the list
     function updateReady(domain) {
         const checkSvg = checkProcess.createObject(null, {
             command: ["bash", "-c", `[ -f "${rawCacheDir}/${domain}.svg" ] && echo svg || echo png`]
@@ -228,9 +236,6 @@ Singleton {
             newReady[domain] = true;
             if (format === "svg") {
                 newReady[domain + "_svg"] = true;
-                // console.log(`[FaviconService] Ready (SVG): ${domain}`);
-            } else {
-                // console.log(`[FaviconService] Ready (PNG): ${domain}`);
             }
             root.readyDomains = newReady;
             
@@ -238,16 +243,16 @@ Singleton {
             delete newDown[domain];
             root.downloading = newDown;
             
-            root.cacheCounter++;
+            root.cacheCounter++; // Poke!
             root.faviconDownloaded(domain);
             checkSvg.destroy();
         });
         checkSvg.running = true;
     }
 
+    // Read the title->URL map file generated by the Python script
     function loadBridge() {
         if (bridgePath === "") return;
-        // Check if file exists before reading to avoid spamming warnings
         const check = checkProcess.createObject(null, {
             command: ["bash", "-c", `[ -f "${bridgePath}" ] && echo yes || echo no`]
         });
@@ -263,19 +268,17 @@ Singleton {
                 try {
                     const raw = reader.text();
                     root.urlMap = JSON.parse(raw);
-                    // console.log(`[FaviconService] Bridge loaded: ${Object.keys(root.urlMap).length} mappings (${raw.length} bytes)`);
-                } catch(e) {
-                    // console.log(`[FaviconService] Bridge parse ERROR: ${e}`);
-                }
+                } catch(e) {}
             });
             check.destroy();
         });
         check.running = true;
     }
 
+    // Clean up old crap and see what's currently in the cache
     function startupScan() {
         const cleanup = cleanupProcess.createObject(null, {
-            command: ["bash", "-c", `find "${rawCacheDir}" -name "*.png" -not -name ".tmp_*" -type f | while read f; do head -c 5 "$f" | grep -qiE "^(<svg|<\\?xml)" && rm -f "$f" && continue; fsize=$(stat -c%s "$f" 2>/dev/null || echo 0); [ "$fsize" -le 400 ] && rm -f "$f"; [ "$fsize" -eq 17259 ] && [ "$(basename "$f")" != "google.com.png" ] && rm -f "$f"; done; for d in mail.google.com calendar.google.com drive.google.com docs.google.com sheets.google.com slides.google.com meet.google.com maps.google.com gemini.google.com youtube.com aistudio.google.com notebooklm.google.com photos.google.com m3.material.io; do rm -f "${rawCacheDir}/$d.png"; done`]
+            command: ["bash", "-c", `find "${rawCacheDir}" -name "*.png" -not -name ".tmp_*" -type f | while read f; do head -c 5 "$f" | grep -qiE "^(<svg|<\\?xml)" && rm -f "$f" && continue; fsize=$(stat -c%s "$f" 2>/dev/null || echo 0); [ "$fsize" -le 400 ] && rm -f "$f"; done; for d in mail.google.com calendar.google.com drive.google.com docs.google.com sheets.google.com slides.google.com meet.google.com maps.google.com gemini.google.com youtube.com aistudio.google.com notebooklm.google.com photos.google.com m3.material.io; do rm -f "${rawCacheDir}/$d.png"; done`]
         });
         cleanup.onExited.connect(() => {
             const scan = scanProcess.createObject(null, {
@@ -301,7 +304,7 @@ Singleton {
                     } else if (!isOfficial && f.endsWith(".svg") && f.length > 4) {
                         const domain = f.replace(".svg", "");
                         temp[domain] = true;
-                        temp[domain + "_svg"] = true; // Mark as SVG format
+                        temp[domain + "_svg"] = true; 
                     }
                 }
                 root.readyDomains = temp;
@@ -312,9 +315,10 @@ Singleton {
         cleanup.running = true;
     }
 
+    // Fire off the Python script to scan browser history
     function triggerBridge() {
         const bridge = bridgeProcess.createObject(null, {
-            command: ["python3", shellDir + "/scripts/favicons/favicon_bridge.py"]
+            command: ["python3", shellDir + "/scripts/favicons/favicon_bridge.py"] // Change this directory also if you did change the download_favicon.sh directory to make things organized
         });
         bridge.onExited.connect(() => {
             loadBridge();
