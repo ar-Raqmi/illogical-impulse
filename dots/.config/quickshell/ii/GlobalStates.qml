@@ -14,6 +14,7 @@ Singleton {
     property bool sidebarLeftOpen: false
     property bool sidebarRightOpen: false
     property bool mediaControlsOpen: false
+    property point mediaButtonPosition: Qt.point(0, 0)
     property bool osdBrightnessOpen: false
     property bool osdVolumeOpen: false
     property bool oskOpen: false
@@ -21,6 +22,8 @@ Singleton {
     property bool overviewOpen: false
     property bool regionSelectorOpen: false
     property bool searchOpen: false
+    property string sidebarRequestedTab: ""
+    property string sidebarSearchText: ""
     property bool screenLocked: false
     property bool screenLockContainsCharacters: false
     property bool screenUnlockFailed: false
@@ -30,8 +33,15 @@ Singleton {
     property bool wallpaperSelectorOpen: false
     property bool workspaceShowNumbers: false
 
+    onSidebarLeftOpenChanged: {
+        if (GlobalStates.sidebarLeftOpen) {
+            GlobalStates.sidebarRightOpen = false;
+        }
+    }
+
     onSidebarRightOpenChanged: {
         if (GlobalStates.sidebarRightOpen) {
+            GlobalStates.sidebarLeftOpen = false;
             Notifications.timeoutAll();
             Notifications.markAllRead();
         }

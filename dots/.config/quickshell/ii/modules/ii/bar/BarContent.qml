@@ -113,13 +113,7 @@ Item { // Bar content region
             anchors.verticalCenter: parent.verticalCenter
             implicitWidth: root.centerSideModuleWidth
 
-            Resources {
-                alwaysShowAllResources: root.useShortenedForm === 2
-                Layout.fillWidth: root.useShortenedForm === 2
-            }
-
             Media {
-                visible: root.useShortenedForm < 2
                 Layout.fillWidth: true
             }
         }
@@ -300,6 +294,7 @@ Item { // Bar content region
                         }
                         NotificationUnreadCount {
                             id: notificationUnreadCount
+                            iconColor: rightSidebarButton.colText
                         }
                     }
                     MaterialSymbol {

@@ -63,7 +63,7 @@ RowLayout {
         Layout.topMargin: 4
         Layout.bottomMargin: 4
         implicitHeight: 40
-        focus: GlobalStates.overviewOpen
+        focus: GlobalStates.searchOpen
         font.pixelSize: Appearance.font.pixelSize.small
         placeholderText: Translation.tr("Search, calculate or run")
         implicitWidth: root.searchingText == "" ? Appearance.sizes.searchWidthCollapsed : Appearance.sizes.searchWidth
@@ -105,12 +105,21 @@ RowLayout {
         Layout.topMargin: 4
         Layout.bottomMargin: 4
         onClicked: {
-            GlobalStates.overviewOpen = false;
-            Quickshell.execDetached(["qs", "-p", Quickshell.shellPath(""), "ipc", "call", "region", "search"]);
+            GlobalStates.searchOpen = false;
+            lensTimer.start();
         }
         text: "image_search"
         StyledToolTip {
             text: Translation.tr("Google Lens")
+        }
+
+        Timer {
+            id: lensTimer
+            interval: 250
+            repeat: false
+            onTriggered: {
+                Quickshell.execDetached(["qs", "-p", Quickshell.shellPath(""), "ipc", "call", "region", "search"]);
+            }
         }
     }
 

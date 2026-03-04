@@ -12,8 +12,6 @@ Scope { // Scope
     id: root
     property bool detach: false
     property bool pin: false
-    property Component contentComponent: SidebarLeftContent {}
-    property Item sidebarContent
 
     function toggleDetach() {
         root.detach = !root.detach;
@@ -58,31 +56,9 @@ Scope { // Scope
         else root.pin = !root.pin;
     }
 
-    Component.onCompleted: {
-        root.sidebarContent = contentComponent.createObject(null, {
-            "scopeRoot": root,
-        });
-        sidebarLoader.item.contentParent.children = [root.sidebarContent];
-    }
-
-    onDetachChanged: {
-        if (root.detach) {
-            GlobalFocusGrab.removeDismissable(sidebarLoader.item) // Remove sidebar from the focus grab system
-            sidebarContent.parent = null; // Detach content from sidebar
-            sidebarLoader.active = false; // Unload sidebar
-            detachedSidebarLoader.active = true; // Load detached window
-            detachedSidebarLoader.item.contentParent.children = [sidebarContent];
-        } else {
-            sidebarContent.parent = null; // Detach content from window
-            detachedSidebarLoader.active = false; // Unload detached window
-            sidebarLoader.active = true; // Load sidebar
-            sidebarLoader.item.contentParent.children = [sidebarContent];
-        }
-    }
-
     Loader {
         id: sidebarLoader
-        active: true
+        active: !root.detach
         
         sourceComponent: PanelWindow { // Window
             id: panelWindow
@@ -90,7 +66,6 @@ Scope { // Scope
             
             property bool extend: false
             property real sidebarWidth: panelWindow.extend ? Appearance.sizes.sidebarWidthExtended : Appearance.sizes.sidebarWidth
-            property var contentParent: sidebarLeftBackground
 
             function hide() {
                 GlobalStates.sidebarLeftOpen = false
@@ -119,8 +94,13 @@ Scope { // Scope
                     GlobalFocusGrab.addDismissable(panelWindow);
                 } else {
                     GlobalFocusGrab.removeDismissable(panelWindow);
+                    // Explicitly reset states when closing to prevent tab/search bleeding
+                    GlobalStates.sidebarRequestedTab = "";
+                    GlobalStates.sidebarSearchText = "";
+                    LauncherSearch.query = "";
                 }
             }
+            Component.onDestruction: GlobalFocusGrab.removeDismissable(panelWindow)
             Connections {
                 target: GlobalFocusGrab
                 function onDismissed() {
@@ -150,6 +130,17 @@ Scope { // Scope
                     animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
                 }
 
+                Loader {
+                    id: sidebarContentLoader
+                    anchors.fill: parent
+                    active: GlobalStates.sidebarLeftOpen
+                    focus: true
+                    sourceComponent: SidebarLeftContent {
+                        scopeRoot: root
+                        Component.onCompleted: forceActiveFocus()
+                    }
+                }
+
                 Keys.onPressed: (event) => {
                     if (event.key === Qt.Key_Escape) {
                         panelWindow.hide();
@@ -158,9 +149,9 @@ Scope { // Scope
                         if (event.key === Qt.Key_O) {
                             panelWindow.extend = !panelWindow.extend;
                         } else if (event.key === Qt.Key_D) {
-                            root.toggleDetach();
+                            Qt.callLater(root.toggleDetach);
                         } else if (event.key === Qt.Key_P) {
-                            root.togglePin();
+                            Qt.callLater(root.togglePin);
                         }
                         event.accepted = true;
                     }
@@ -171,11 +162,10 @@ Scope { // Scope
 
     Loader {
         id: detachedSidebarLoader
-        active: false
+        active: root.detach
 
         sourceComponent: FloatingWindow {
             id: detachedSidebarRoot
-            property var contentParent: detachedSidebarBackground
             color: "transparent"
 
             visible: GlobalStates.sidebarLeftOpen
@@ -188,10 +178,21 @@ Scope { // Scope
                 anchors.fill: parent
                 color: Appearance.colors.colLayer0
 
+                Loader {
+                    id: sidebarContentLoader
+                    anchors.fill: parent
+                    active: GlobalStates.sidebarLeftOpen
+                    focus: true
+                    sourceComponent: SidebarLeftContent {
+                        scopeRoot: root
+                        Component.onCompleted: forceActiveFocus()
+                    }
+                }
+
                 Keys.onPressed: (event) => {
                     if (event.modifiers === Qt.ControlModifier) {
                         if (event.key === Qt.Key_D) {
-                            root.toggleDetach();
+                            Qt.callLater(root.toggleDetach);
                         }
                         event.accepted = true;
                     }

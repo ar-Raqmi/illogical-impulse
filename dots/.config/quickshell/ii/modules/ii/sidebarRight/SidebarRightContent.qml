@@ -17,7 +17,7 @@ import qs.modules.ii.sidebarRight.nightLight
 import qs.modules.ii.sidebarRight.volumeMixer
 import qs.modules.ii.sidebarRight.wifiNetworks
 
-Item {
+FocusScope {
     id: root
     property int sidebarWidth: Appearance.sizes.sidebarWidth
     property int sidebarPadding: 10
@@ -103,6 +103,8 @@ Item {
             }
 
             BottomWidgetGroup {
+                id: bottomWidgetGroup
+                focus: true
                 Layout.alignment: Qt.AlignHCenter
                 Layout.fillHeight: false
                 Layout.fillWidth: true
@@ -231,7 +233,11 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: 25
                     height: 25
-                    source: SystemInfo.distroIcon
+                    source: {
+                        if (Config.options.bar.topLeftIcon === 'distro') return SystemInfo.distroIcon;
+                        if (Config.options.bar.topLeftIcon === 'miuLogo' || !Config.options.bar.topLeftIcon) return "miuLogo.svg";
+                        return `${Config.options.bar.topLeftIcon}-symbolic`;
+                    }
                     colorize: true
                     color: Appearance.colors.colOnLayer0
                 }

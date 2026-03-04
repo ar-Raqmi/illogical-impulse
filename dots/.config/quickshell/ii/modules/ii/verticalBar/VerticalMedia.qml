@@ -27,6 +27,16 @@ MouseArea {
         onTriggered: activePlayer.positionChanged()
     }
 
+    Component.onCompleted: updateButtonPosition()
+    onYChanged: updateButtonPosition()
+
+    function updateButtonPosition() {
+        var screenPos = root.mapToItem(null, 0, 0);
+        if (screenPos) {
+            GlobalStates.mediaButtonPosition = Qt.point(screenPos.x, screenPos.y);
+        }
+    }
+
     acceptedButtons: Qt.MiddleButton | Qt.BackButton | Qt.ForwardButton | Qt.RightButton | Qt.LeftButton
     hoverEnabled: !Config.options.bar.tooltips.clickToShow
     onPressed: (event) => {
@@ -37,6 +47,7 @@ MouseArea {
         } else if (event.button === Qt.ForwardButton || event.button === Qt.RightButton) {
             activePlayer.next();
         } else if (event.button === Qt.LeftButton) {
+            updateButtonPosition();
             GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen
         }
     }

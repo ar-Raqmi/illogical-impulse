@@ -11,7 +11,7 @@ QuickToggleButton {
     visible: false
     
     contentItem: CustomIcon {
-        id: distroIcon
+        id: warpIcon
         source: 'cloudflare-dns-symbolic'
 
         anchors.centerIn: parent
