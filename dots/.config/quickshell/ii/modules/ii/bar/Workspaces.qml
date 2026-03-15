@@ -124,14 +124,26 @@ Item {
         }
     }
 
-    // Workspaces - background
+    // Workspaces - Track Background (Unified)
+    Rectangle {
+        id: trackBg
+        z: 0
+        anchors.fill: bgGrid
+        anchors.margins: -1
+        radius: height / 2
+        color: ColorUtils.transparentize(Appearance.colors.colLayer1, 0.2)
+        border.color: ColorUtils.transparentize(Appearance.colors.colOutlineVariant, 0.1)
+        border.width: root.borderless ? 0 : 1
+    }
+
+    // Workspaces - individual pills/circles
     Grid {
         id: bgGrid
         z: 1
         anchors.centerIn: parent
 
-        rowSpacing: 0
-        columnSpacing: 0
+        rowSpacing: 4
+        columnSpacing: 4
         columns: root.vertical ? 1 : root.workspacesShown
         rows: root.vertical ? root.workspacesShown : 1
 
@@ -145,33 +157,15 @@ Item {
                 property int numWindows: workspaceWindows.length > 0 ? workspaceWindows.length : 1
                 implicitWidth: root.vertical ? workspaceButtonWidth : (numWindows * workspaceButtonWidth)
                 implicitHeight: root.vertical ? (numWindows * workspaceButtonWidth) : workspaceButtonWidth
-                Behavior on implicitWidth { animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this) }
-                Behavior on implicitHeight { animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this) }
-                radius: (width / 2)
-                property var previousOccupied: (workspaceOccupied[index-1] && !(!activeWindow?.activated && root.effectiveActiveWorkspaceId === index))
-                property var rightOccupied: (workspaceOccupied[index+1] && !(!activeWindow?.activated && root.effectiveActiveWorkspaceId === index+2))
-                property var radiusPrev: previousOccupied ? 0 : (width / 2)
-                property var radiusNext: rightOccupied ? 0 : (width / 2)
-
-                topLeftRadius: radiusPrev
-                bottomLeftRadius: root.vertical ? radiusNext : radiusPrev
-                topRightRadius: root.vertical ? radiusPrev : radiusNext
-                bottomRightRadius: radiusNext
+                
+                radius: (root.vertical ? width : height) / 2
                 
                 color: ColorUtils.transparentize(Appearance.m3colors.m3secondaryContainer, 0.4)
                 opacity: (workspaceOccupied[index] && !(!activeWindow?.activated && root.effectiveActiveWorkspaceId === index+1)) ? 1 : 0
 
-                Behavior on opacity {
-                    animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
-                }
-                Behavior on radiusPrev {
-                    animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
-                }
-
-                Behavior on radiusNext {
-                    animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
-                }
-
+                Behavior on implicitWidth { animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this) }
+                Behavior on implicitHeight { animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this) }
+                Behavior on opacity { animation: Appearance.animation.elementMove.numberAnimation.createObject(this) }
             }
 
         }
@@ -181,7 +175,6 @@ Item {
     // Active workspace
     Rectangle {
         z: 2
-        // Make active ws indicator, which has a brighter color, smaller to look like it is of the same size as ws occupied highlight
         radius: Appearance.rounding.full
         color: Appearance.colors.colPrimary
 
@@ -209,7 +202,6 @@ Item {
         implicitWidth: root.vertical ? indicatorThickness : indicatorLength
         y: root.vertical ? indicatorPosition : null
         implicitHeight: root.vertical ? indicatorLength : indicatorThickness
-
     }
 
     // Workspaces - numbers
@@ -218,8 +210,8 @@ Item {
 
         columns: root.vertical ? 1 : root.workspacesShown
         rows: root.vertical ? root.workspacesShown : 1
-        columnSpacing: 0
-        rowSpacing: 0
+        columnSpacing: 4
+        rowSpacing: 4
 
         anchors.fill: parent
 
@@ -248,12 +240,10 @@ Item {
                         implicitWidth: parent.width
                         implicitHeight: parent.height
                         property bool hasWindows: workspaceItem.workspaceWindows.length > 0
+                        property bool showIcons: Config.options?.bar.workspaces.showAppIcons && hasWindows && !root.showNumbers
 
                         StyledText { // Workspace number text
-                            opacity: root.showNumbers
-                                || ((Config.options?.bar.workspaces.alwaysShowNumbers && (!Config.options?.bar.workspaces.showAppIcons || !workspaceButtonBackground.hasWindows || root.showNumbers))
-                                || (root.showNumbers && !Config.options?.bar.workspaces.showAppIcons)
-                                )  ? 1 : 0
+                            opacity: (root.showNumbers || (Config.options?.bar.workspaces.alwaysShowNumbers && !workspaceButtonBackground.showIcons)) ? 1 : 0
                             z: 3
 
                             anchors.centerIn: parent
@@ -276,10 +266,7 @@ Item {
                         }
                         Rectangle { // Dot instead of ws number
                             id: wsDot
-                            opacity: (Config.options?.bar.workspaces.alwaysShowNumbers
-                                || root.showNumbers
-                                || (Config.options?.bar.workspaces.showAppIcons && workspaceButtonBackground.hasWindows)
-                                ) ? 0 : 1
+                            opacity: (root.showNumbers || workspaceButtonBackground.showIcons || Config.options?.bar.workspaces.alwaysShowNumbers) ? 0 : 1
                             visible: opacity > 0
                             anchors.centerIn: parent
                             width: workspaceButtonWidth * 0.18
@@ -309,9 +296,7 @@ Item {
                         columns: root.vertical ? 1 : workspaceItem.numWindows
                         rows: root.vertical ? workspaceItem.numWindows : 1
                         spacing: 0
-                        opacity: !Config.options?.bar.workspaces.showAppIcons ? 0 :
-                            (parent.hasWindows && !root.showNumbers && Config.options?.bar.workspaces.showAppIcons) ? 
-                            1 : parent.hasWindows ? workspaceIconOpacityShrinked : 0
+                        opacity: workspaceButtonBackground.showIcons ? 1 : 0
                         visible: opacity > 0
 
                         Behavior on opacity {
@@ -340,7 +325,9 @@ Item {
                                     anchors.fill: parent
                                     onClicked: {
                                         if (windowRef && windowRef.address) {
-                                            Hyprland.dispatch(`focuswindow address:${windowRef.address}`);
+                                            let addr = windowRef.address;
+                                            if (!addr.startsWith("0x")) addr = "0x" + addr;
+                                            Hyprland.dispatch(`focuswindow address:${addr}`);
                                         }
                                     }
                                 }
@@ -382,7 +369,7 @@ Item {
                                         ColorOverlay {
                                             anchors.fill: desaturatedIcon
                                             source: desaturatedIcon
-                                            color: ColorUtils.transparentize(wsDot.color, 0.9)
+                                            color: ColorUtils.transparentize((root.effectiveActiveWorkspaceId == workspaceItem.workspaceValue) ? Appearance.m3colors.m3onPrimary : wsDot.color, 0.2)
                                         }
                                     }
                                 }
@@ -398,9 +385,12 @@ Item {
                         anchors.bottom: root.vertical ? parent.bottom : undefined
                         anchors.verticalCenter: root.vertical ? undefined : parent.verticalCenter
                         anchors.horizontalCenter: root.vertical ? parent.horizontalCenter : undefined
-                        width: root.vertical ? parent.width - 8 : 1
-                        height: root.vertical ? 1 : parent.height - 8
-                        opacity: 0.5
+                        anchors.rightMargin: root.vertical ? 0 : -2.5
+                        anchors.bottomMargin: root.vertical ? -2.5 : 0
+                        
+                        width: root.vertical ? 10 : 1
+                        height: root.vertical ? 1 : 10
+                        opacity: 0.3
                     }
                 }
             }
