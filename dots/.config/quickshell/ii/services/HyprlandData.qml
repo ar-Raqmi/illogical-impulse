@@ -44,6 +44,19 @@ Singleton {
         return root.windowByAddress[address];
     }
 
+    function sortedWindowsForWorkspace(workspace) {
+        let clients = root.windowList.filter(win => win.workspace.id === workspace);
+        // Sort first by vertical position (at[1]) with a 50px tolerance to group rows, then by horizontal position (at[0])
+        clients.sort((a, b) => {
+            let yDiff = a.at[1] - b.at[1];
+            if (Math.abs(yDiff) > 50) {
+                return yDiff; // Different rows
+            }
+            return a.at[0] - b.at[0];
+        });
+        return clients;
+    }
+
     // Internals
 
     function updateWindowList() {
