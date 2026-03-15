@@ -116,7 +116,7 @@
                     "enable": true,
                     "text": "miuOS"
                 },
-                "showOnlyWhenLocked": false,
+                "showOnlyWhenLocked": true,
                 "style": "digital",
                 "styleLocked": "cookie",
                 "x": 379.5703124999999,
@@ -142,11 +142,11 @@
         },
         "borderless": true,
         "bottom": false,
-        "cornerStyle": 2,
+        "cornerStyle": 0,
         "floatStyleShadow": true,
         "indicators": {
             "notifications": {
-                "showUnreadCount": false
+                "showUnreadCount": true
             }
         },
         "resources": {
@@ -186,7 +186,7 @@
             "numberMap": [],
             "showAppIcons": true,
             "showNumberDelay": 300,
-            "shown": 5,
+            "shown": 10,
             "useNerdFont": false
         }
     },
@@ -460,8 +460,8 @@
         }
     },
     "sounds": {
-        "battery": false,
-        "pomodoro": false,
+        "battery": true,
+        "pomodoro": true,
         "theme": "freedesktop"
     },
     "time": {
