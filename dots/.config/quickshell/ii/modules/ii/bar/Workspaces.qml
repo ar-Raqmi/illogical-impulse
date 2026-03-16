@@ -296,7 +296,7 @@ Item {
                         columns: root.vertical ? 1 : workspaceItem.numWindows
                         rows: root.vertical ? workspaceItem.numWindows : 1
                         spacing: 0
-                        opacity: workspaceButtonBackground.showIcons ? 1 : 0
+                        opacity: workspaceButtonBackground.showIcons ? 1 : 0.8
                         visible: opacity > 0
 
                         Behavior on opacity {
