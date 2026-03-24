@@ -479,7 +479,7 @@
     },
     "tray": {
         "filterPassive": true,
-        "invertPinnedItems": true,
+        "invertPinnedItems": false,
         "monochromeIcons": false,
         "pinnedItems": [
             "Fcitx"
