@@ -26,7 +26,6 @@ gui-apps/hyprshot
 gui-apps/wf-recorder
 gui-apps/wtype
 gui-apps/fuzzel
-gui-apps/quickshell **
 gui-apps/wlogout
 dev-cpp/sdbus-c++
 dev-libs/hyprland-protocols
@@ -50,7 +49,7 @@ media-fonts/space-grotesk
 media-fonts/material-symbols-variable **
 media-fonts/readex-pro
 media-fonts/rubik-vf
-app-misc/songrec
-dev-cpp/glaze::hyproverlay
+media-sound/songrec
+dev-cpp/glaze
 dev-cpp/cpptrace
 dev-libs/libdwarf
