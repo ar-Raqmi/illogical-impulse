@@ -10,9 +10,9 @@ Item {
     property bool vertical: false
     clip: true
 
-    implicitWidth: vertical ? -1 : (reveal ? childrenRect.width : 0)
-    implicitHeight: !vertical ? -1 : (reveal ? childrenRect.height : 0)
-    visible: reveal || (width > 0 && height > 0)
+    implicitWidth: (reveal || vertical) ? childrenRect.width : 0
+    implicitHeight: (reveal || !vertical) ? childrenRect.height : 0
+    visible: reveal || (implicitWidth > 0 && !vertical) || (implicitHeight > 0 && vertical)
 
     Behavior on implicitWidth {
         enabled: !vertical
