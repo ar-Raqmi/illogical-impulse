@@ -223,14 +223,7 @@ Item { // Bar content region
                 }
             }
 
-            HorizontalBarSeparator {}
-
-            BatteryIndicator {
-                visible: Battery.available
-                Layout.fillWidth: true
-            }
-
-            HorizontalBarSeparator {
+HorizontalBarSeparator {
                 visible: Battery.available
             }
 
