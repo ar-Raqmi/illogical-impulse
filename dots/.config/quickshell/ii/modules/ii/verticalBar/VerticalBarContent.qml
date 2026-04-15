@@ -223,7 +223,7 @@ Item { // Bar content region
                 }
             }
 
-HorizontalBarSeparator {
+            HorizontalBarSeparator {
                 visible: Battery.available
             }
 
@@ -235,13 +235,6 @@ HorizontalBarSeparator {
                     id: dateClockColumn
                     anchors.fill: parent
                     spacing: 9
-
-                    VerticalDateWidget {
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.fillWidth: true
-                    }
-
-                    HorizontalBarSeparator {}
 
                     VerticalClockWidget {
                         Layout.alignment: Qt.AlignHCenter
