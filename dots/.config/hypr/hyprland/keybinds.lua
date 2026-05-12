@@ -107,6 +107,7 @@ end
 hl.bind("ALT + F4", function() hl.exec_cmd("notify-send \"Wrong close keybind\" \"Super+Q to close. Use Alt+F4 for Windows VMs\" -a Hyprland") end, {non_consuming = true} )
 hl.bind("SUPER + Q", hl.dsp.window.close(), {description = "Close"} )
 hl.bind("SUPER + SHIFT + ALT + Q", hl.dsp.exec_cmd("hyprctl kill"), {description = "Forcefully zap a window"} )
+hl.bind("SUPER + Escape", hl.dsp.exec_cmd('PID=$(hyprctl activewindow -j | jq -r .pid) && kill -9 "$PID" && pkill -9 -P "$PID"'), {description = "Forcefully zap a window"} )
 
 --# Window split ratio
 --#/# binde = SUPER, ;/',, -- Adjust split ratio
