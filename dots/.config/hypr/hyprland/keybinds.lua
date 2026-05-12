@@ -6,16 +6,17 @@ local hyprScripts = "$HOME/.config/hypr/hyprland/scripts"
 local qsIpcCall = "qs -c $qsConfig ipc call"
 local qsIsAlive = qsIpcCall.." TEST_ALIVE"
 
-hl.bind("SUPER + SUPER_L", hl.dsp.global("quickshell:searchToggleRelease"), {description = "Toggle search"} )
-hl.bind("SUPER + SUPER_R", hl.dsp.global("quickshell:searchToggleRelease"))
-hl.bind("SUPER + SUPER_L", hl.dsp.exec_cmd(qsIsAlive.." || pkill fuzzel || fuzzel") )
-hl.bind("SUPER + SUPER_R", hl.dsp.exec_cmd(qsIsAlive.." || pkill fuzzel || fuzzel") )
+-- hl.bind("SUPER + SUPER_L", hl.dsp.global("quickshell:searchToggleRelease"), {description = "Toggle search"} )
+-- hl.bind("SUPER + SUPER_R", hl.dsp.global("quickshell:searchToggleRelease"))
+-- hl.bind("SUPER + SUPER_L", hl.dsp.exec_cmd(qsIsAlive.." || pkill fuzzel || fuzzel") )
+-- hl.bind("SUPER + SUPER_R", hl.dsp.exec_cmd(qsIsAlive.." || pkill fuzzel || fuzzel") )
 
 hl.bind("SUPER_L", hl.dsp.global("quickshell:workspaceNumber"), {ignore_mods = true, transparent = true} )
 hl.bind("SUPER_R", hl.dsp.global("quickshell:workspaceNumber"), {ignore_mods = true, transparent = true} )
 hl.bind("SUPER_L", hl.dsp.global("quickshell:workspaceNumber"), {ignore_mods = true, transparent = true, release = true} )
 hl.bind("SUPER_R", hl.dsp.global("quickshell:workspaceNumber"), {ignore_mods = true, transparent = true, release = true} )
 hl.bind("SUPER + Tab", hl.dsp.global("quickshell:overviewWorkspacesToggle"), {description = "Toggle overview"} )
+hl.bind("SUPER + Space", hl.dsp.global("quickshell:overviewWorkspacesToggle"), {description = "Toggle overview"} )
 hl.bind("SUPER + V", hl.dsp.global("quickshell:overviewClipboardToggle"), {description = "Clipboard history >> clipboard"} )
 hl.bind("SUPER + Period", hl.dsp.global("quickshell:overviewEmojiToggle"), {description = "Emoji >> clipboard"} )
 hl.bind("SUPER + A", hl.dsp.global("quickshell:sidebarLeftToggle"), {description = "Toggle left sidebar"} )
@@ -96,11 +97,11 @@ for i = 1, 6 do
  local focusdir = {"l","r","u","d","l","r"}
  hl.bind("SUPER + "..arrowkey[i], hl.dsp.focus({direction = focusdir[i]}) )
 end
---#/# bind = SUPER + SHIFT, ←/↑/→/↓,, -- Move in direction
+--#/# bind = SUPER + ALT, ←/↑/→/↓,, -- Move in direction
 for i = 1, 4 do
  local arrowkey = {"Left","Right","Up","Down"}
  local focusdir = {"l","r","u","d"}
- hl.bind("SUPER + SHIFT + "..arrowkey[i], hl.dsp.window.move({direction = focusdir[i]}) )
+ hl.bind("SUPER + ALT + "..arrowkey[i], hl.dsp.window.move({direction = focusdir[i]}) )
 end
 
 hl.bind("ALT + F4", function() hl.exec_cmd("notify-send \"Wrong close keybind\" \"Super+Q to close. Use Alt+F4 for Windows VMs\" -a Hyprland") end, {non_consuming = true} )
@@ -113,36 +114,36 @@ hl.bind("SUPER + Semicolon", hl.dsp.layout("splitratio -0.1"), {repeating = true
 hl.bind("SUPER + Apostrophe", hl.dsp.layout("splitratio +0.1"), {repeating = true} )
 --# Positioning mode
 hl.bind("SUPER + ALT + Space", hl.dsp.window.float({action = "toggle"}), {description = "Float/Tile"} )
-hl.bind("SUPER + D", hl.dsp.window.fullscreen({"maximized"}, {description = "Maximize"}) )
+hl.bind("SUPER + D", hl.dsp.window.fullscreen_state({internal = 1, client = 0, action = "toggle"}, {description = "Maximize"}) )
 hl.bind("SUPER + F", hl.dsp.window.fullscreen({"fullscreen"}, {description = "Fullscreen"}) )
-hl.bind("SUPER + ALT + F", hl.dsp.window.fullscreen_state({internal = 0, client = 3}, {description = "Fullscreen spoof"}) )
+hl.bind("SUPER + ALT + F", hl.dsp.window.fullscreen_state({internal = 0, client = 3, action = "toggle"}, {description = "Fullscreen spoof"}) )
 hl.bind("SUPER + P", hl.dsp.window.pin(), {description = "Pin"} )
 
---#/# bind = SUPER+ALT, Hash,, -- Send to workspace -- (1, 2, 3,...)
+--#/# bind = SUPER+SHIFT, Hash,, -- Send to workspace -- (1, 2, 3,...)
 --# We use raw keycodes because some keyboard layouts register number keys as different chars. The codes can be verified with `wev`
 for i = 1, 10 do
  local numberkey = {10,11,12,13,14,15,16,17,18,19}
- hl.bind("SUPER + ALT + code:"..numberkey[i], hl.dsp.window.move({ workspace = i, follow = false}) )
+ hl.bind("SUPER + SHIFT + code:"..numberkey[i], hl.dsp.window.move({ workspace = i, follow = true}) )
 end
 --# keypad numbers
 for i = 1, 10 do
  local numpadkey = {87,88,89,83,84,85,79,80,81,90}
- hl.bind("SUPER + ALT + code:"..numpadkey[i], hl.dsp.window.move({ workspace = i, follow = false}) )
+ hl.bind("SUPER + SHIFT + code:"..numpadkey[i], hl.dsp.window.move({ workspace = i, follow = true}) )
 end
 
---# #/# bind = SUPER+SHIFT, Scroll ↑/↓,, -- Send to workspace left/right
+--# #/# bind = SUPER+ALT, Scroll ↑/↓,, -- Send to workspace left/right
 for i = 1, 4 do
- local key = {"SUPER + SHIFT + mouse_", "SUPER + ALT + mouse_"}
- local keycombos = {key[1].."down", key[1].."up", key[2].."down", key[2].."up"}
- local prefix = {"r-","r+","-","+"}
- hl.bind(keycombos[i], hl.dsp.window.move({workspace = prefix[i].."1"}) )
+  local key = {"SUPER + ALT + mouse_", "SUPER + SHIFT + mouse_"}
+  local keycombos = {key[1].."down", key[1].."up", key[2].."down", key[2].."up"}
+  local prefix = {"r-","r+","-","+"}
+  hl.bind(keycombos[i], hl.dsp.window.move({workspace = prefix[i].."1"}) )
 end
 
 --#/# bind = SUPER+SHIFT, Page_↑/↓,, -- Send to workspace left/right
 for i = 1, 6 do
  local key = {"SUPER + ALT + Page_", "SUPER + SHIFT + Page_", "CTRL + SUPER + SHIFT + "}
  local keycombos = {key[1].."down", key[1].."up", key[2].."down", key[2].."up", key[3].."Right", key[3].."Left"}
- local prefix = {"+","-","r+","r-","r+","r-"}
+ local prefix = {"r+","r-","+","-","r+","r-"}
  hl.bind(keycombos[i], hl.dsp.window.move({workspace = prefix[i].."1"}) ) -- # [hidden]
 end
 
