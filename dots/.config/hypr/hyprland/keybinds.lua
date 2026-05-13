@@ -104,9 +104,10 @@ for i = 1, 4 do
  hl.bind("SUPER + ALT + "..arrowkey[i], hl.dsp.window.move({direction = focusdir[i]}) )
 end
 
+hl.bind("SUPER + Tab", hl.dsp.window.cycle_next({next}), {description = "Cycle Next"})
 hl.bind("ALT + F4", function() hl.exec_cmd("notify-send \"Wrong close keybind\" \"Super+Q to close. Use Alt+F4 for Windows VMs\" -a Hyprland") end, {non_consuming = true} )
 hl.bind("SUPER + Q", hl.dsp.window.close(), {description = "Close"} )
-hl.bind("SUPER + SHIFT + ALT + Q", hl.dsp.exec_cmd("hyprctl kill"), {description = "Forcefully zap a window"} )
+hl.bind("SUPER + SHIFT + ALT + Q", hl.dsp.exec_cmd("hyprctl kill"), {description = "Force close"} )
 hl.bind("SUPER + Escape", hl.dsp.exec_cmd('PID=$(hyprctl activewindow -j | jq -r .pid) && kill -9 "$PID" && pkill -9 -P "$PID"'), {description = "Forcefully zap a window"} )
 
 --# Window split ratio
@@ -119,7 +120,7 @@ hl.bind("SUPER + D", hl.dsp.window.fullscreen({mode = "maximized"}), {descriptio
 hl.bind("SUPER + F", hl.dsp.window.fullscreen({mode = "fullscreen"}), {description = "Fullscreen"})
 hl.bind("SUPER + ALT + F", hl.dsp.window.fullscreen_state({internal = 0, client = 3, action = "toggle"}), {description = "Fullscreen spoof"})
 hl.bind("SUPER + P", hl.dsp.window.pin(), {description = "Pin"} )
-hl.bind("SUPER + W", hl.dsp.layout("togglesplit"))
+hl.bind("SUPER + W", hl.dsp.layout("togglesplit"), {description = "Toggle Split"})
 
 --#/# bind = SUPER+SHIFT, Hash,, -- Send to workspace -- (1, 2, 3,...)
 --# We use raw keycodes because some keyboard layouts register number keys as different chars. The codes can be verified with `wev`
