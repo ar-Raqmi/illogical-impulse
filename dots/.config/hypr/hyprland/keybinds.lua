@@ -104,7 +104,7 @@ for i = 1, 4 do
  hl.bind("SUPER + ALT + "..arrowkey[i], hl.dsp.window.move({direction = focusdir[i]}) )
 end
 
-hl.bind("SUPER + Tab", hl.dsp.window.cycle_next({next}), {description = "Cycle Next"})
+hl.bind("ALT + Tab", hl.dsp.window.cycle_next({next}), {description = "Cycle Next"})
 hl.bind("ALT + F4", function() hl.exec_cmd("notify-send \"Wrong close keybind\" \"Super+Q to close. Use Alt+F4 for Windows VMs\" -a Hyprland") end, {non_consuming = true} )
 hl.bind("SUPER + Q", hl.dsp.window.close(), {description = "Close"} )
 hl.bind("SUPER + SHIFT + ALT + Q", hl.dsp.exec_cmd("hyprctl kill"), {description = "Force close"} )
