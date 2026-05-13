@@ -110,7 +110,7 @@ hl.config({
     dwindle = {
         preserve_split = true,
         smart_split = false,
-        smart_resizing = false
+        smart_resizing = true
         -- precise_mouse_move = true,
     },
 })
