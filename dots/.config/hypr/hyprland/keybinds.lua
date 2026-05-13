@@ -119,6 +119,7 @@ hl.bind("SUPER + D", hl.dsp.window.fullscreen({mode = "maximized"}), {descriptio
 hl.bind("SUPER + F", hl.dsp.window.fullscreen({mode = "fullscreen"}), {description = "Fullscreen"})
 hl.bind("SUPER + ALT + F", hl.dsp.window.fullscreen_state({internal = 0, client = 3, action = "toggle"}), {description = "Fullscreen spoof"})
 hl.bind("SUPER + P", hl.dsp.window.pin(), {description = "Pin"} )
+hl.bind("SUPER + W", hl.dsp.layout("togglesplit"))
 
 --#/# bind = SUPER+SHIFT, Hash,, -- Send to workspace -- (1, 2, 3,...)
 --# We use raw keycodes because some keyboard layouts register number keys as different chars. The codes can be verified with `wev`
@@ -261,8 +262,8 @@ hl.bind("SUPER + Return", hl.dsp.exec_cmd(terminal), {description = "Terminal"} 
 hl.bind("SUPER + T", hl.dsp.exec_cmd(terminal) )
 hl.bind("CTRL + ALT + T", hl.dsp.exec_cmd(terminal) )
 hl.bind("SUPER + E", hl.dsp.exec_cmd(fileManager), {description = "File manager"} )
-hl.bind("SUPER + W", hl.dsp.exec_cmd(browser), {description = "Browser"} )
-hl.bind("SUPER + C", hl.dsp.exec_cmd(codeEditor), {description = "Code editor"} )
+-- hl.bind("SUPER + W", hl.dsp.exec_cmd(browser), {description = "Browser"} )
+-- hl.bind("SUPER + C", hl.dsp.exec_cmd(codeEditor), {description = "Code editor"} )
 hl.bind("CTRL + SUPER + SHIFT + ALT + W", hl.dsp.exec_cmd(officeSoftware), {description = "Office software"} )
 hl.bind("SUPER + X", hl.dsp.exec_cmd(textEditor), {description = "Text editor"} )
 hl.bind("CTRL + SUPER + V", hl.dsp.exec_cmd(volumeMixer), {description = "Volume mixer"} )
