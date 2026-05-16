@@ -202,25 +202,25 @@ hl.bind("SUPER + W", hl.dsp.layout("togglesplit"), { description = "Window: Togg
 --#/# bind = SUPER+SHIFT, Hash,, -- Send to workspace -- (1, 2, 3,...)
 for i = 1, 10 do
     hl.bind("SUPER + SHIFT + " .. (i % 10), function()
-        hl.dispatch(hl.dsp.window.move({ workspace = workspace_in_group(i), follow = false }))
+        hl.dispatch(hl.dsp.window.move({ workspace = workspace_in_group(i), follow = true }))
     end, { description = "Window: Send to workspace " .. i })
 end
 --# We also use raw keycodes because some keyboard layouts register number keys as different chars. The codes can be verified with `wev`
 for i = 1, 10 do
     local numberkey = { 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 }
     hl.bind("SUPER + SHIFT + code:" .. numberkey[i], function()
-        hl.dispatch(hl.dsp.window.move({ workspace = workspace_in_group(i), follow = false }))
+        hl.dispatch(hl.dsp.window.move({ workspace = workspace_in_group(i), follow = true }))
     end)
 end
 --# keypad numbers
 for i = 1, 10 do
     local numpadkey = { 87, 88, 89, 83, 84, 85, 79, 80, 81, 90 }
     hl.bind("SUPER + SHIFT + code:" .. numpadkey[i], function()
-        hl.dispatch(hl.dsp.window.move({ workspace = workspace_in_group(i), follow = false }))
+        hl.dispatch(hl.dsp.window.move({ workspace = workspace_in_group(i), follow = true }))
     end)
 end
 
---# #/# bind = SUPER+ALT, Scroll ↑/↓,, -- Send to workspace left/right
+--# #/# bind = SUPER+SHIFT, Scroll ↑/↓,, -- Send to workspace left/right
 for i = 1, 4 do
  local key = {"SUPER + SHIFT + mouse_", "SUPER + ALT + mouse_"}
  local keycombos = {key[1].."down", key[1].."up", key[2].."down", key[2].."up"}
@@ -236,7 +236,7 @@ for i = 1, 2 do
     hl.bind("SUPER + SHIFT + Page_" .. keydirs[i], hl.dsp.window.move({ workspace = prefix[i] .. "1" }), {description = "Window: Send to workspace " .. descdir[i]})
 end
 for i = 1, 4 do
-    local key = { "SUPER + SHIFT + Page_", "CTRL + SUPER + SHIFT + " }
+    local key = { "SUPER + ALT + Page_", "SUPER + SHIFT + " }
     local keycombos = { key[1] .. "down", key[1] .. "up", key[2] .. "Right", key[2] .. "Left" }
     local prefix = { "r+", "r-", "r+", "r-" }
     hl.bind(keycombos[i], hl.dsp.window.move({ workspace = prefix[i] .. "1" })) -- # [hidden]
