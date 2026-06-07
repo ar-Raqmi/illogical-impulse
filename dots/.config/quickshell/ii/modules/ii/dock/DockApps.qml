@@ -24,11 +24,13 @@ Item {
     property bool requestDockShow: previewPopup.show || contextMenuOpen
 
     property int monitorId: 0
+    property var unpinnedAppOrder: []
 
     property list<var> filteredApps: {
         const _trigger1 = ToplevelManager.toplevels.values;
         const _trigger2 = HyprlandData.windowList;
         const _trigger3 = Config.options?.dock.pinnedApps;
+        const _trigger4 = root.unpinnedAppOrder;
 
         const monitorWindows = [];
         for (const toplevel of ToplevelManager.toplevels.values) {
@@ -37,18 +39,6 @@ Item {
                 monitorWindows.push({ toplevel: toplevel, client: client });
             }
         }
-
-        // Sort windows: left-to-right, top-to-bottom
-        monitorWindows.sort((a, b) => {
-            const ax = a.client.at[0];
-            const ay = a.client.at[1];
-            const bx = b.client.at[0];
-            const by = b.client.at[1];
-            if (ax !== bx) {
-                return ax - bx;
-            }
-            return ay - by;
-        });
 
         const pinnedApps = Config.options?.dock.pinnedApps ?? [];
         const pinnedEntries = [];
@@ -90,6 +80,43 @@ Item {
             });
         }
 
+        // Sort unpinned entries according to root.unpinnedAppOrder
+        const orderMap = {};
+        const currentOrder = root.unpinnedAppOrder || [];
+        for (let i = 0; i < currentOrder.length; i++) {
+            orderMap[currentOrder[i]] = i;
+        }
+
+        unpinnedEntries.sort((a, b) => {
+            const idxA = orderMap[a.appId] !== undefined ? orderMap[a.appId] : 999999;
+            const idxB = orderMap[b.appId] !== undefined ? orderMap[b.appId] : 999999;
+            if (idxA !== idxB) {
+                return idxA - idxB;
+            }
+            return a.appId.localeCompare(b.appId);
+        });
+
+        // Synchronize root.unpinnedAppOrder
+        let needsUpdate = false;
+        let newOrder = currentOrder.slice();
+        newOrder = newOrder.filter(appId => unpinnedEntries.some(e => e.appId === appId));
+        if (newOrder.length !== currentOrder.length) {
+            needsUpdate = true;
+        }
+
+        for (const entry of unpinnedEntries) {
+            if (newOrder.indexOf(entry.appId) === -1) {
+                newOrder.push(entry.appId);
+                needsUpdate = true;
+            }
+        }
+
+        if (needsUpdate) {
+            Qt.callLater(() => {
+                root.unpinnedAppOrder = newOrder;
+            });
+        }
+
         const result = [];
         for (const entry of pinnedEntries) {
             result.push(entry);
@@ -108,6 +135,76 @@ Item {
         }
 
         return result;
+    }
+
+    function canMoveLeft(appId, isPinned) {
+        const appIdLower = appId.toLowerCase();
+        if (isPinned) {
+            const pinnedApps = Config.options?.dock.pinnedApps ?? [];
+            const idx = pinnedApps.findIndex(id => id.toLowerCase() === appIdLower);
+            return idx > 0;
+        } else {
+            const idx = unpinnedAppOrder.indexOf(appIdLower);
+            return idx > 0;
+        }
+    }
+
+    function canMoveRight(appId, isPinned) {
+        const appIdLower = appId.toLowerCase();
+        if (isPinned) {
+            const pinnedApps = Config.options?.dock.pinnedApps ?? [];
+            const idx = pinnedApps.findIndex(id => id.toLowerCase() === appIdLower);
+            return idx !== -1 && idx < pinnedApps.length - 1;
+        } else {
+            const idx = unpinnedAppOrder.indexOf(appIdLower);
+            return idx !== -1 && idx < unpinnedAppOrder.length - 1;
+        }
+    }
+
+    function moveLeft(appId, isPinned) {
+        const appIdLower = appId.toLowerCase();
+        if (isPinned) {
+            let pinnedApps = (Config.options?.dock.pinnedApps ?? []).slice();
+            const idx = pinnedApps.findIndex(id => id.toLowerCase() === appIdLower);
+            if (idx > 0) {
+                const temp = pinnedApps[idx];
+                pinnedApps[idx] = pinnedApps[idx - 1];
+                pinnedApps[idx - 1] = temp;
+                Config.options.dock.pinnedApps = pinnedApps;
+            }
+        } else {
+            let newOrder = unpinnedAppOrder.slice();
+            const idx = newOrder.indexOf(appIdLower);
+            if (idx > 0) {
+                const temp = newOrder[idx];
+                newOrder[idx] = newOrder[idx - 1];
+                newOrder[idx - 1] = temp;
+                unpinnedAppOrder = newOrder;
+            }
+        }
+    }
+
+    function moveRight(appId, isPinned) {
+        const appIdLower = appId.toLowerCase();
+        if (isPinned) {
+            let pinnedApps = (Config.options?.dock.pinnedApps ?? []).slice();
+            const idx = pinnedApps.findIndex(id => id.toLowerCase() === appIdLower);
+            if (idx !== -1 && idx < pinnedApps.length - 1) {
+                const temp = pinnedApps[idx];
+                pinnedApps[idx] = pinnedApps[idx + 1];
+                pinnedApps[idx + 1] = temp;
+                Config.options.dock.pinnedApps = pinnedApps;
+            }
+        } else {
+            let newOrder = unpinnedAppOrder.slice();
+            const idx = newOrder.indexOf(appIdLower);
+            if (idx !== -1 && idx < newOrder.length - 1) {
+                const temp = newOrder[idx];
+                newOrder[idx] = newOrder[idx + 1];
+                newOrder[idx + 1] = temp;
+                unpinnedAppOrder = newOrder;
+            }
+        }
     }
 
     Layout.fillHeight: true

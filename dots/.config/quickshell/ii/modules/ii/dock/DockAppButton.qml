@@ -102,6 +102,7 @@ DockButton {
         sourceComponent: DockAppContextMenu {
             appToplevel: root.appToplevel
             desktopEntry: root.desktopEntry
+            appListRoot: root.appListRoot
             anchor {
                 window: root.QsWindow.window
                 item: root

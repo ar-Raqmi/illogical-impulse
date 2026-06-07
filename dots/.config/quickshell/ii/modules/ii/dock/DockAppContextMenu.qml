@@ -13,7 +13,7 @@ PopupWindow {
 
     required property var appToplevel
     required property var desktopEntry
-    signal closed()
+    property var appListRoot: null
 
     color: "transparent"
     property real padding: Appearance.sizes.elevationMargin
@@ -113,16 +113,87 @@ PopupWindow {
             }
 
             // 2. Pin/Unpin
-            MenuButton {
+            RippleButton {
+                id: pinButton
                 Layout.fillWidth: true
-                buttonText: root.appToplevel.pinned ? Translation.tr("Unpin from dock") : Translation.tr("Pin to dock")
+                buttonRadius: 0
+                implicitHeight: 36
+                implicitWidth: pinText.implicitWidth + 14 * 2 + 18 + 8
+
                 onClicked: {
                     TaskbarApps.togglePin(root.appToplevel.appId);
                     root.closed();
                 }
+
+                contentItem: Item {
+                    anchors.fill: parent
+
+                    MaterialSymbol {
+                        id: pinIcon
+                        anchors.left: parent.left
+                        anchors.leftMargin: 14
+                        anchors.verticalCenter: parent.verticalCenter
+                        iconSize: 18
+                        text: "push_pin"
+                        color: pinButton.enabled ? Appearance.m3colors.m3onSurface : Appearance.m3colors.m3outline
+
+                        Behavior on color {
+                            animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
+                        }
+                    }
+
+                    StyledText {
+                        id: pinText
+                        anchors.left: pinIcon.right
+                        anchors.leftMargin: 8
+                        anchors.right: parent.right
+                        anchors.rightMargin: 14
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: root.appToplevel.pinned ? Translation.tr("Unpin from dock") : Translation.tr("Pin to dock")
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        color: pinButton.enabled ? Appearance.m3colors.m3onSurface : Appearance.m3colors.m3outline
+                        horizontalAlignment: Text.AlignLeft
+
+                        Behavior on color {
+                            animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
+                        }
+                    }
+                }
             }
 
-            // 3. Close (only if there are running toplevels)
+            // 3. Move left
+            MenuButton {
+                visible: root.appListRoot !== null && root.appListRoot.canMoveLeft(root.appToplevel.appId, root.appToplevel.pinned)
+                Layout.fillWidth: true
+                buttonText: Translation.tr("Move left")
+                onClicked: {
+                    root.appListRoot.moveLeft(root.appToplevel.appId, root.appToplevel.pinned);
+                    root.closed();
+                }
+            }
+
+            // 4. Move right
+            MenuButton {
+                visible: root.appListRoot !== null && root.appListRoot.canMoveRight(root.appToplevel.appId, root.appToplevel.pinned)
+                Layout.fillWidth: true
+                buttonText: Translation.tr("Move right")
+                onClicked: {
+                    root.appListRoot.moveRight(root.appToplevel.appId, root.appToplevel.pinned);
+                    root.closed();
+                }
+            }
+
+            // Separator before close
+            Rectangle {
+                visible: root.appToplevel.toplevels.length > 0
+                Layout.fillWidth: true
+                Layout.topMargin: 4
+                Layout.bottomMargin: 4
+                implicitHeight: 1
+                color: Appearance.colors.colLayer0Border
+            }
+
+            // 5. Close (only if there are running toplevels)
             MenuButton {
                 visible: root.appToplevel.toplevels.length > 0
                 Layout.fillWidth: true
