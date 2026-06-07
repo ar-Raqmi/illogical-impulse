@@ -1,12 +1,18 @@
 hl.config({
     general = {
         col = {
-            active_border   = "rgba({{colors.outline_variant.default.hex_stripped}}77)",
-            inactive_border = "rgba({{colors.surface_container_low.default.hex_stripped}}33)",
+          active_border   = "rgba({{colors.outline_variant.default.hex_stripped}}77)",
+          inactive_border = "rgba({{colors.surface_container_low.default.hex_stripped}}33)",
         },
     },
     misc = {
         background_color = "rgba({{colors.surface.dark.hex_stripped}}FF)",
+    },
+    plugin = {
+        hyprbars = {
+          bar_color    = "rgb({{colors.surface_container_low.default.hex_stripped}})",
+          ["col.text"] = "rgb({{colors.on_surface.default.hex_stripped}})",
+        },
     },
 })
 
