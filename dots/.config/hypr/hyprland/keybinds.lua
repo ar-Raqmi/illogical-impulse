@@ -244,7 +244,8 @@ for i = 1, 4 do
 end
 
 hl.bind("SUPER + ALT + S",
-    hl.dsp.window.move({ workspace = "special:special", follow = false }), { description = "Window: Send to scratchpad" })
+        hl.dsp.exec_cmd([[bash -c 'if hyprctl activewindow -j | grep -q "\"id\": -99"; then hyprctl dispatch "hl.dsp.window.move({ workspace = \"e+0\" })"; else hyprctl dispatch "hl.dsp.window.move({ workspace = \"special\", follow = false })"; fi']]),
+        { description = "Window: Toggle scratchpad (Move in/out)" })
 hl.bind("CTRL + SUPER + S", hl.dsp.workspace.toggle_special("special"))
 
 --##! Workspace
