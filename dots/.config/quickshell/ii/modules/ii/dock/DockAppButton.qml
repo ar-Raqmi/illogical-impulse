@@ -67,7 +67,22 @@ DockButton {
             return;
         }
         lastFocused = (lastFocused + 1) % appToplevel.toplevels.length
-        appToplevel.toplevels[lastFocused].activate()
+        const toplevel = appToplevel.toplevels[lastFocused];
+        const client = HyprlandData.clientForToplevel(toplevel);
+        if (client) {
+            const isSpecial = (client.workspace.id === -99 || client.workspace.name.indexOf("special") === 0);
+            const isActive = toplevel.activated;
+            if (isSpecial) {
+                toplevel.activate();
+                Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.window.move({ workspace = \"e+0\" })"]);
+            } else if (isActive) {
+                Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.window.move({ workspace = \"special\", follow = false })"]);
+            } else {
+                toplevel.activate();
+            }
+        } else {
+            toplevel.activate();
+        }
     }
 
     middleClickAction: () => {
@@ -75,7 +90,28 @@ DockButton {
     }
 
     altAction: () => {
-        TaskbarApps.togglePin(appToplevel.appId);
+        contextMenuLoader.active = true;
+    }
+
+    Loader {
+        id: contextMenuLoader
+        active: false
+        onActiveChanged: {
+            appListRoot.contextMenuOpen = active;
+        }
+        sourceComponent: DockAppContextMenu {
+            appToplevel: root.appToplevel
+            desktopEntry: root.desktopEntry
+            anchor {
+                window: root.QsWindow.window
+                item: root
+                gravity: Edges.Top | Edges.Right
+                edges: Edges.Top | Edges.Left
+            }
+            onClosed: {
+                contextMenuLoader.active = false;
+            }
+        }
     }
 
     contentItem: Loader {

@@ -20,7 +20,95 @@ Item {
 
     property Item lastHoveredButton: null
     property bool buttonHovered: false
-    property bool requestDockShow: previewPopup.show
+    property bool contextMenuOpen: false
+    property bool requestDockShow: previewPopup.show || contextMenuOpen
+
+    property int monitorId: 0
+
+    property list<var> filteredApps: {
+        const _trigger1 = ToplevelManager.toplevels.values;
+        const _trigger2 = HyprlandData.windowList;
+        const _trigger3 = Config.options?.dock.pinnedApps;
+
+        const monitorWindows = [];
+        for (const toplevel of ToplevelManager.toplevels.values) {
+            const client = HyprlandData.clientForToplevel(toplevel);
+            if (client && client.monitor === root.monitorId) {
+                monitorWindows.push({ toplevel: toplevel, client: client });
+            }
+        }
+
+        // Sort windows: left-to-right, top-to-bottom
+        monitorWindows.sort((a, b) => {
+            const ax = a.client.at[0];
+            const ay = a.client.at[1];
+            const bx = b.client.at[0];
+            const by = b.client.at[1];
+            if (ax !== bx) {
+                return ax - bx;
+            }
+            return ay - by;
+        });
+
+        const pinnedApps = Config.options?.dock.pinnedApps ?? [];
+        const pinnedEntries = [];
+        const runningAppIdsOnThisMonitor = new Set();
+
+        for (const appId of pinnedApps) {
+            const appIdLower = appId.toLowerCase();
+            const appToplevels = monitorWindows
+                .filter(mw => mw.toplevel.appId.toLowerCase() === appIdLower)
+                .map(mw => mw.toplevel);
+
+            pinnedEntries.push({
+                appId: appIdLower,
+                pinned: true,
+                toplevels: appToplevels
+            });
+            runningAppIdsOnThisMonitor.add(appIdLower);
+        }
+
+        const unpinnedEntries = [];
+        for (const mw of monitorWindows) {
+            const appIdLower = mw.toplevel.appId.toLowerCase();
+            if (runningAppIdsOnThisMonitor.has(appIdLower)) {
+                continue;
+            }
+
+            if (unpinnedEntries.some(e => e.appId === appIdLower)) {
+                continue;
+            }
+
+            const appToplevels = monitorWindows
+                .filter(mw2 => mw2.toplevel.appId.toLowerCase() === appIdLower)
+                .map(mw2 => mw2.toplevel);
+
+            unpinnedEntries.push({
+                appId: appIdLower,
+                pinned: false,
+                toplevels: appToplevels
+            });
+        }
+
+        const result = [];
+        for (const entry of pinnedEntries) {
+            result.push(entry);
+        }
+
+        if (pinnedEntries.length > 0 && unpinnedEntries.length > 0) {
+            result.push({
+                appId: "SEPARATOR",
+                pinned: false,
+                toplevels: []
+            });
+        }
+
+        for (const entry of unpinnedEntries) {
+            result.push(entry);
+        }
+
+        return result;
+    }
 
     Layout.fillHeight: true
     Layout.topMargin: Appearance.sizes.hyprlandGapsOut
@@ -48,7 +136,7 @@ Item {
 
         model: ScriptModel {
             objectProp: "appId"
-            values: TaskbarApps.apps
+            values: root.filteredApps
         }
         delegate: DockAppButton {
             required property var modelData
@@ -162,7 +250,16 @@ Item {
                                 windowButton.modelData?.close();
                             }
                             onClicked: {
-                                windowButton.modelData?.activate();
+                                const toplevel = windowButton.modelData;
+                                if (toplevel) {
+                                    const client = HyprlandData.clientForToplevel(toplevel);
+                                    if (client && (client.workspace.id === -99 || client.workspace.name.indexOf("special") === 0)) {
+                                        toplevel.activate();
+                                        Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.window.move({ workspace = \"e+0\" })"]);
+                                    } else {
+                                        toplevel.activate();
+                                    }
+                                }
                             }
                             contentItem: ColumnLayout {
                                 implicitWidth: screencopyView.implicitWidth
