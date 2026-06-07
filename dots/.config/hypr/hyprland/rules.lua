@@ -53,6 +53,9 @@ hl.window_rule({match = {class = "org.freedesktop.impl.portal.desktop.kde" }, fl
 hl.window_rule({match = {class = "org.freedesktop.impl.portal.desktop.kde" }, size = {"(monitor_w*0.60)", "(monitor_h*0.65)"} })
 hl.window_rule({match = {class = "^(Zotero)$" },                             float = true})
 hl.window_rule({match = {class = "^(Zotero)$" },                             size = {"(monitor_w*0.45)", "(monitor_h*0.45)"} })
+hl.window_rule({match = {class = "^(org.kde.haruna)$" },                     float = true})
+hl.window_rule({match = {class = "^(mpv)$" },                                float = true})
+hl.window_rule({match = {class = "^(org.kde.gwenview)$" },                   float = true})
 
 -- Move
 -- kde-material-you-colors spawns a window when changing dark/light theme. This is to make sure it doesn't interfere at all.
