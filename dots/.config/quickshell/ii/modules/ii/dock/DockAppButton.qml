@@ -71,12 +71,9 @@ DockButton {
         const client = HyprlandData.clientForToplevel(toplevel);
         if (client) {
             const isSpecial = (client.workspace.id === -99 || client.workspace.name.indexOf("special") === 0);
-            const isActive = toplevel.activated;
             if (isSpecial) {
                 toplevel.activate();
                 Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.window.move({ workspace = \"e+0\" })"]);
-            } else if (isActive) {
-                Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.window.move({ workspace = \"special\", follow = false })"]);
             } else {
                 toplevel.activate();
             }
