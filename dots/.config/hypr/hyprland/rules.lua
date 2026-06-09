@@ -13,7 +13,7 @@ hl.window_rule({match = { class = "^(chrome-)(.*)$" },                       ful
 -- Floating
 hl.window_rule({match = {title = "^(Applications — Dolphin)$" },             center = true})
 hl.window_rule({match = {title = "^(Applications — Dolphin)$" },             float = true})
-hl.window_rule({match = {title = "^(Applications — Dolphin)$" },             size = {"(monitor_w*0.45)", "(monitor_h*0.45)"} })
+hl.window_rule({match = {title = "^(Applications — Dolphin)$" },             size = {"1280", "720"} })
 hl.window_rule({match = {title = "^(Open File)(.*)$" },                      center = true})
 hl.window_rule({match = {title = "^(Open File)(.*)$" },                      float = true})
 hl.window_rule({match = {title = "^(Select a File)(.*)$" },                  center = true})
