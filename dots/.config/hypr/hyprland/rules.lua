@@ -5,6 +5,7 @@ hl.window_rule({match = {class = "^()$", title = "^()$" },                   no_
 
 -- Disable blur for every window
 hl.window_rule({match = {class = ".*" }, no_blur = true })
+hl.window_rule({match = {class = "^(DesktopEditors)$" }, center = true })
 -- hl.window_rule({match = {class = ".*" }, center = true })
 
 -- Fake Fullscreen
