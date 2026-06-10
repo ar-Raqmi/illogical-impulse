@@ -11,7 +11,7 @@ hl.config({
             bar_precedence_over_border = true,
             bar_part_of_window = true,
             bar_title_enabled = false,
-            on_double_click = "hyprctl dispatch 'hl.dsp.window.float({ action = \"toggle\" })'",
+            on_double_click = "$HOME/.config/hypr/hyprland/scripts/toggle_float.sh",
         },
     },
 })

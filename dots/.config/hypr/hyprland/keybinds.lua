@@ -190,7 +190,7 @@ hl.bind("SUPER + Escape", hl.dsp.exec_cmd('PID=$(hyprctl activewindow -j | jq -r
 hl.bind("SUPER + Semicolon", hl.dsp.layout("splitratio -0.1"), { repeating = true })
 hl.bind("SUPER + Apostrophe", hl.dsp.layout("splitratio +0.1"), { repeating = true })
 --# Positioning mode
-hl.bind("SUPER + ALT + Space", hl.dsp.window.float({ action = "toggle" }), { description = "Window: Float/Tile" })
+hl.bind("SUPER + ALT + Space", hl.dsp.exec_cmd(hyprScripts .. "/toggle_float.sh"), { description = "Window: Float/Tile" })
 hl.bind("SUPER + D", hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }),
     { description = "Window: Maximize" })
 hl.bind("SUPER + F", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }),
