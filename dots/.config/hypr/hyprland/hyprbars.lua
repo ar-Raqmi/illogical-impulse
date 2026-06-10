@@ -55,6 +55,7 @@ hl.window_rule({
 end
 
 no_bar({ initial_title = "^(WPS)(.*)$" })
+no_bar({ initial_class = "^(et)$" })
 no_bar({ initial_title = "^(ONLYOFFICE)(.*)$" })
 no_bar({ title = "^(?i)(.*)(updater)(.*)$" })
 no_bar({ title = "^([Pp]icture[-\\s]?[Ii]n[-\\s]?[Pp]icture)(.*)$" })
