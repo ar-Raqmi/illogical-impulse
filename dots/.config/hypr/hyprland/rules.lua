@@ -5,7 +5,7 @@ hl.window_rule({match = {class = "^()$", title = "^()$" },                   no_
 
 -- Disable blur for every window
 hl.window_rule({match = {class = ".*" }, no_blur = true })
-hl.window_rule({match = {class = ".*" }, center = true })
+-- hl.window_rule({match = {class = ".*" }, center = true })
 
 -- Fake Fullscreen
 hl.window_rule({match = { class = "^(chrome-)(.*)$" },                       fullscreen_state = "0 3"})
