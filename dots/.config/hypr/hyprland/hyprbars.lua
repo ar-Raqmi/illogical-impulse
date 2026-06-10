@@ -33,7 +33,7 @@ hl.plugin.hyprbars.add_button({
     fg_color = "rgb(000000)",
     size = 14,
     icon = "",
-    action = [[bash -c 'if hyprctl activewindow -j | grep -q "\"id\": -99"; then hyprctl dispatch "hl.dsp.window.move({ workspace = \"e+0\" })"; else hyprctl dispatch "hl.dsp.window.move({ workspace = \"special\", follow = false })"; fi']],
+    action = "$HOME/.config/hypr/hyprland/scripts/minimize.sh",
 })
 
 -- Fullscreen Button
@@ -68,7 +68,7 @@ no_bar({ tag = "nobar" })
 hl.config({
     plugin = {
         csd_minimize = {
-            command = "hyprctl dispatch 'hl.dsp.window.float({ action = \"toggle\" })' && hyprctl dispatch 'hl.dsp.window.float({ action = \"toggle\" })' && hyprctl dispatch \"hl.dsp.window.move({ workspace = \'special\', follow = false, })\""
+            command = "$HOME/.config/hypr/hyprland/scripts/minimize.sh"
         }
     }
 })

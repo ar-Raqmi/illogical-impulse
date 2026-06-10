@@ -351,8 +351,7 @@ Item {
                                 if (toplevel) {
                                     const client = HyprlandData.clientForToplevel(toplevel);
                                     if (client && (client.workspace.id === -99 || client.workspace.name.indexOf("special") === 0)) {
-                                        toplevel.activate();
-                                        Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.window.move({ workspace = \"e+0\" })"]);
+                                        Quickshell.execDetached([Quickshell.shellPath("scripts/hyprland/restore_window.sh"), client.address]);
                                     } else {
                                         toplevel.activate();
                                     }

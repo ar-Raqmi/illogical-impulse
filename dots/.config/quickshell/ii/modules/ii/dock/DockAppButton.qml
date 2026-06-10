@@ -6,6 +6,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
+import Quickshell.Hyprland
 
 DockButton {
     id: root
@@ -70,13 +71,7 @@ DockButton {
         const toplevel = appToplevel.toplevels[lastFocused];
         const client = HyprlandData.clientForToplevel(toplevel);
         if (client) {
-            const isSpecial = (client.workspace.id === -99 || client.workspace.name.indexOf("special") === 0);
-            if (isSpecial) {
-                toplevel.activate();
-                Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.window.move({ workspace = \"e+0\" })"]);
-            } else {
-                toplevel.activate();
-            }
+            Quickshell.execDetached([Quickshell.shellPath("scripts/hyprland/restore_window.sh"), client.address]);
         } else {
             toplevel.activate();
         }
