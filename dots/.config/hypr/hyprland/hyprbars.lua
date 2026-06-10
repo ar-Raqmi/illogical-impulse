@@ -48,10 +48,10 @@ hl.plugin.hyprbars.add_button({
 -- ######## Window Rules (No Bar) ########
 
 local function no_bar(match_table)
-    hl.window_rule({
-        match = match_table,
-        ["hyprbars:no_bar"] = true
-    })
+hl.window_rule({
+    match = match_table,
+    ["hyprbars:no_bar"] = true
+})
 end
 
 no_bar({ initial_title = "^(WPS)(.*)$" })
@@ -64,3 +64,12 @@ no_bar({ class = "^(steam)$" })
 no_bar({ title = "^(ar-Raqmi Dashboard)(.*)$" })
 no_bar({ class = "^(.*)(quickshell)(.*)$" })
 no_bar({ tag = "nobar" })
+
+hl.config({
+    plugin = {
+        csd_minimize = {
+            command = "hyprctl dispatch 'hl.dsp.window.float({ action = \"toggle\" })' && hyprctl dispatch 'hl.dsp.window.float({ action = \"toggle\" })' && hyprctl dispatch \"hl.dsp.window.move({ workspace = \'special\', follow = false, })\""
+        }
+    }
+})
+
