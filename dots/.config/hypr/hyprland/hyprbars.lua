@@ -64,6 +64,7 @@ no_bar({ class = "^(code)$" })
 no_bar({ class = "^(steam)$" })
 no_bar({ title = "^(ar-Raqmi Dashboard)(.*)$" })
 no_bar({ class = "^(.*)(quickshell)(.*)$" })
+no_bar({ class = "^(net.lutris)(.*)$" })
 no_bar({ tag = "nobar" })
 
 hl.config({
