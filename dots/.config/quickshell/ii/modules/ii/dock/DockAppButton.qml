@@ -62,7 +62,7 @@ DockButton {
         }
     }
 
-    onClicked: {
+    function launchOrCycle() {
         if (appToplevel.toplevels.length === 0) {
             root.desktopEntry?.execute();
             return;
@@ -74,6 +74,59 @@ DockButton {
             Quickshell.execDetached([Quickshell.shellPath("scripts/hyprland/restore_window.sh"), client.address]);
         } else {
             toplevel.activate();
+        }
+    }
+
+    opacity: !root.enabled ? 0.4
+        : (appListRoot.dragging && appListRoot.draggedAppId === appToplevel.appId) ? 0.3
+        : 1.0
+    Behavior on opacity {
+        animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+    }
+
+    DropArea {
+        id: dropArea
+        anchors.fill: parent
+        enabled: !root.isSeparator && appListRoot.dragging
+
+        function handleDrop(drag) {
+            if (!appListRoot.dragging) return;
+            if (appListRoot.draggedAppId === root.appToplevel.appId) return;
+            if (appListRoot.draggedPinned !== root.appToplevel.pinned) return;
+            const dropBefore = drag.x < width / 2;
+            appListRoot.reorder(appListRoot.draggedAppId, appListRoot.draggedPinned, root.appToplevel.appId, dropBefore);
+        }
+        onEntered: drag => handleDrop(drag)
+        onPositionChanged: drag => handleDrop(drag)
+    }
+
+    MouseArea {
+        id: dragArea
+        anchors.fill: parent
+        acceptedButtons: Qt.LeftButton
+        drag.target: root.isSeparator ? null : appListRoot.ghostItem
+        drag.axis: Drag.XAndYAxis
+        drag.threshold: 8
+
+        onPressed: mouse => {
+            if (root.isSeparator) return;
+            const ghost = appListRoot.ghostItem;
+            const pos = appListRoot.mapFromItem(dragArea, mouse.x, mouse.y);
+            ghost.x = pos.x - ghost.width / 2;
+            ghost.y = pos.y - ghost.height / 2;
+        }
+        onPositionChanged: mouse => {
+            if (dragArea.drag.active && !appListRoot.dragging && !root.isSeparator) {
+                appListRoot.beginDrag(root.appToplevel.appId, root.appToplevel.pinned);
+            }
+        }
+        // Qt suppresses this after a drag, so it only fires for genuine clicks.
+        onClicked: mouse => root.launchOrCycle()
+        onReleased: () => {
+            if (appListRoot.dragging) appListRoot.endDrag();
+        }
+        onCanceled: () => {
+            if (appListRoot.dragging) appListRoot.endDrag();
         }
     }
 

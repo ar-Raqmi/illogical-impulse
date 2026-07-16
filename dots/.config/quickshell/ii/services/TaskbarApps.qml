@@ -20,6 +20,30 @@ Singleton {
         }
     }
 
+    // Inserts draggedAppId before/after targetAppId. Returns null on no-op.
+    function reorderList(list, draggedAppId, targetAppId, dropBefore) {
+        const draggedLower = String(draggedAppId).toLowerCase();
+        const targetLower = String(targetAppId).toLowerCase();
+        const fromIdx = list.findIndex(id => String(id).toLowerCase() === draggedLower);
+        let targetIdx = list.findIndex(id => String(id).toLowerCase() === targetLower);
+        if (fromIdx === -1 || targetIdx === -1 || fromIdx === targetIdx) return null;
+
+        const [item] = list.splice(fromIdx, 1);
+        if (fromIdx < targetIdx) targetIdx -= 1;
+        const insertIdx = dropBefore ? targetIdx : targetIdx + 1;
+        if (insertIdx === fromIdx) {
+            list.splice(fromIdx, 0, item);
+            return null;
+        }
+        list.splice(insertIdx, 0, item);
+        return list;
+    }
+
+    function reorderPinned(draggedAppId, targetAppId, dropBefore) {
+        const next = root.reorderList([...Config.options.dock.pinnedApps], draggedAppId, targetAppId, dropBefore);
+        if (next) Config.options.dock.pinnedApps = next;
+    }
+
     property list<var> apps: {
         var map = new Map();
 

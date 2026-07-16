@@ -21,11 +21,14 @@ Item {
     property Item lastHoveredButton: null
     property bool buttonHovered: false
     property bool contextMenuOpen: false
-    property bool requestDockShow: previewPopup.show || contextMenuOpen
+    property bool requestDockShow: previewPopup.show || contextMenuOpen || root.dragging
 
     property int monitorId: 0
     property var unpinnedAppOrder: []
 
+    property bool dragging: false
+    property string draggedAppId: ""
+    property bool draggedPinned: false
     property list<var> filteredApps: {
         const _trigger1 = ToplevelManager.toplevels.values;
         const _trigger2 = HyprlandData.windowList;
@@ -137,76 +140,29 @@ Item {
         return result;
     }
 
-    function canMoveLeft(appId, isPinned) {
-        const appIdLower = appId.toLowerCase();
-        if (isPinned) {
-            const pinnedApps = Config.options?.dock.pinnedApps ?? [];
-            const idx = pinnedApps.findIndex(id => id.toLowerCase() === appIdLower);
-            return idx > 0;
-        } else {
-            const idx = unpinnedAppOrder.indexOf(appIdLower);
-            return idx > 0;
-        }
+    function reorderUnpinned(draggedAppId, targetAppId, dropBefore) {
+        const next = TaskbarApps.reorderList([...root.unpinnedAppOrder], draggedAppId, targetAppId, dropBefore);
+        if (next) root.unpinnedAppOrder = next;
     }
 
-    function canMoveRight(appId, isPinned) {
-        const appIdLower = appId.toLowerCase();
-        if (isPinned) {
-            const pinnedApps = Config.options?.dock.pinnedApps ?? [];
-            const idx = pinnedApps.findIndex(id => id.toLowerCase() === appIdLower);
-            return idx !== -1 && idx < pinnedApps.length - 1;
-        } else {
-            const idx = unpinnedAppOrder.indexOf(appIdLower);
-            return idx !== -1 && idx < unpinnedAppOrder.length - 1;
-        }
+    function reorder(draggedAppId, isPinned, targetAppId, dropBefore) {
+        if (isPinned) TaskbarApps.reorderPinned(draggedAppId, targetAppId, dropBefore);
+        else root.reorderUnpinned(draggedAppId, targetAppId, dropBefore);
     }
 
-    function moveLeft(appId, isPinned) {
-        const appIdLower = appId.toLowerCase();
-        if (isPinned) {
-            let pinnedApps = (Config.options?.dock.pinnedApps ?? []).slice();
-            const idx = pinnedApps.findIndex(id => id.toLowerCase() === appIdLower);
-            if (idx > 0) {
-                const temp = pinnedApps[idx];
-                pinnedApps[idx] = pinnedApps[idx - 1];
-                pinnedApps[idx - 1] = temp;
-                Config.options.dock.pinnedApps = pinnedApps;
-            }
-        } else {
-            let newOrder = unpinnedAppOrder.slice();
-            const idx = newOrder.indexOf(appIdLower);
-            if (idx > 0) {
-                const temp = newOrder[idx];
-                newOrder[idx] = newOrder[idx - 1];
-                newOrder[idx - 1] = temp;
-                unpinnedAppOrder = newOrder;
-            }
-        }
+    function beginDrag(appId, isPinned) {
+        root.draggedAppId = appId;
+        root.draggedPinned = isPinned;
+        root.dragging = true;
+        root.contextMenuOpen = false;
     }
 
-    function moveRight(appId, isPinned) {
-        const appIdLower = appId.toLowerCase();
-        if (isPinned) {
-            let pinnedApps = (Config.options?.dock.pinnedApps ?? []).slice();
-            const idx = pinnedApps.findIndex(id => id.toLowerCase() === appIdLower);
-            if (idx !== -1 && idx < pinnedApps.length - 1) {
-                const temp = pinnedApps[idx];
-                pinnedApps[idx] = pinnedApps[idx + 1];
-                pinnedApps[idx + 1] = temp;
-                Config.options.dock.pinnedApps = pinnedApps;
-            }
-        } else {
-            let newOrder = unpinnedAppOrder.slice();
-            const idx = newOrder.indexOf(appIdLower);
-            if (idx !== -1 && idx < newOrder.length - 1) {
-                const temp = newOrder[idx];
-                newOrder[idx] = newOrder[idx + 1];
-                newOrder[idx + 1] = temp;
-                unpinnedAppOrder = newOrder;
-            }
-        }
+    function endDrag() {
+        root.dragging = false;
+        root.draggedAppId = "";
     }
 
+    property Item ghostItem: dragGhost
     Layout.fillHeight: true
     Layout.topMargin: Appearance.sizes.hyprlandGapsOut
     implicitWidth: listView.implicitWidth
@@ -231,6 +187,26 @@ Item {
             animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
         }
 
+        // Reordering animates along X (the dock is a horizontal list).
+        displaced: Transition {
+            animations: [ Appearance.animation.elementMoveFast.numberAnimation.createObject(listView, { property: "x" }) ]
+        }
+        move: Transition {
+            animations: [ Appearance.animation.elementMoveFast.numberAnimation.createObject(listView, { property: "x" }) ]
+        }
+        moveDisplaced: Transition {
+            animations: [ Appearance.animation.elementMoveFast.numberAnimation.createObject(listView, { property: "x" }) ]
+        }
+        addDisplaced: Transition {
+            animations: [ Appearance.animation.elementMoveFast.numberAnimation.createObject(listView, { property: "x" }) ]
+        }
+        removeDisplaced: Transition {
+            animations: [ Appearance.animation.elementMoveFast.numberAnimation.createObject(listView, { property: "x" }) ]
+        }
+        remove: Transition {
+            animations: [ Appearance.animation.elementMoveFast.numberAnimation.createObject(listView, { property: "opacity", to: 0 }) ]
+        }
+
         model: ScriptModel {
             objectProp: "appId"
             values: root.filteredApps
@@ -245,11 +221,36 @@ Item {
         }
     }
 
+    // Floating icon that follows the cursor while dragging.
+    Item {
+        id: dragGhost
+        visible: root.dragging
+        width: ghostIcon.implicitWidth
+        height: ghostIcon.implicitHeight
+        z: 1000
+        opacity: visible ? 0.95 : 0
+
+        Drag.active: root.dragging
+        Drag.hotSpot.x: width / 2
+        Drag.hotSpot.y: height / 2
+
+        Behavior on opacity {
+            animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+        }
+
+        IconImage {
+            id: ghostIcon
+            anchors.centerIn: parent
+            source: Quickshell.iconPath(AppSearch.guessIcon(root.draggedAppId), "image-missing")
+            implicitSize: (Config.options?.dock.height ?? 70) * 0.66
+        }
+    }
+
     PopupWindow {
         id: previewPopup
         property var appTopLevel: root.lastHoveredButton?.appToplevel
 
-        property bool shouldShow: (popupMouseArea.containsMouse || root.buttonHovered) && appTopLevel && appTopLevel.toplevels && appTopLevel.toplevels.length > 0
+        property bool shouldShow: !root.dragging && (popupMouseArea.containsMouse || root.buttonHovered) && appTopLevel && appTopLevel.toplevels && appTopLevel.toplevels.length > 0
 
         property bool show: false
         property real cachedCenterX: 0

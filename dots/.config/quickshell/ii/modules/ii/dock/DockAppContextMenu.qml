@@ -161,29 +161,7 @@ PopupWindow {
                 }
             }
 
-            // 3. Move left
-            MenuButton {
-                visible: root.appListRoot !== null && root.appListRoot.canMoveLeft(root.appToplevel.appId, root.appToplevel.pinned)
-                Layout.fillWidth: true
-                buttonText: Translation.tr("Move left")
-                onClicked: {
-                    root.appListRoot.moveLeft(root.appToplevel.appId, root.appToplevel.pinned);
-                    root.closed();
-                }
-            }
-
-            // 4. Move right
-            MenuButton {
-                visible: root.appListRoot !== null && root.appListRoot.canMoveRight(root.appToplevel.appId, root.appToplevel.pinned)
-                Layout.fillWidth: true
-                buttonText: Translation.tr("Move right")
-                onClicked: {
-                    root.appListRoot.moveRight(root.appToplevel.appId, root.appToplevel.pinned);
-                    root.closed();
-                }
-            }
-
-            // Separator before close
+            // 3. Separator before close
             Rectangle {
                 visible: root.appToplevel.toplevels.length > 0
                 Layout.fillWidth: true
@@ -193,7 +171,7 @@ PopupWindow {
                 color: Appearance.colors.colLayer0Border
             }
 
-            // 5. Close (only if there are running toplevels)
+            // 4. Close (only if there are running toplevels)
             MenuButton {
                 visible: root.appToplevel.toplevels.length > 0
                 Layout.fillWidth: true
