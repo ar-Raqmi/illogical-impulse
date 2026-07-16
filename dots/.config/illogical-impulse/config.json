@@ -27,7 +27,7 @@
                 "key_get_link": "https://openrouter.ai/settings/keys",
                 "key_id": "openrouter",
                 "model": "openrouter/free",
-                "name": "OpenRouter Free",
+                "name": "Aiko",
                 "requires_key": true
             }
         ],
