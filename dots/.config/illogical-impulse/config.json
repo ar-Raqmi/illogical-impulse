@@ -23,7 +23,7 @@
                     }
                 },
                 "homepage": "https://openrouter.ai/openrouter/free",
-                "icon": "openrouter-symbolic",
+                "icon": "miuos-symbolic",
                 "key_get_link": "https://openrouter.ai/settings/keys",
                 "key_id": "openrouter",
                 "model": "openrouter/free",
